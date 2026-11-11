@@ -4,3 +4,16 @@ __pycache__/
 salida/
 datos/final/
 .DS_Store
+
+# Lago de datos local (bronze/silver/gold): se regenera con el pipeline
+lake/
+*.duckdb
+*.duckdb.wal
+
+# Secretos: nunca al repo
+.env
+.env.*
+!.env.example
+kaggle.json
+access_token
+*.pem

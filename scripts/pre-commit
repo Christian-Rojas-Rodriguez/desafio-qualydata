@@ -1,0 +1,13 @@
+#!/bin/sh
+# Bloquea commits que incluyan archivos de secretos o claves con formato conocido.
+# Instalar con: ln -sf ../../scripts/pre-commit .git/hooks/pre-commit
+staged=$(git diff --cached --name-only --diff-filter=ACM)
+[ -z "$staged" ] && exit 0
+if echo "$staged" | grep -Eq '(^|/)(\.env|kaggle\.json|access_token)$'; then
+  echo "pre-commit: archivo de secretos en el commit; sacalo con git reset" >&2
+  exit 1
+fi
+if git diff --cached -U0 -- $staged | grep -Eq '^\+.*(sk-ant-[A-Za-z0-9_-]{20,}|sk-[A-Za-z0-9]{32,}|KGAT_[A-Za-z0-9]{16,}|ghp_[A-Za-z0-9]{30,})'; then
+  echo "pre-commit: parece haber una API key en el diff; usá .env" >&2
+  exit 1
+fi
