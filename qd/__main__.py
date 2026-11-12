@@ -10,10 +10,10 @@ import platform
 import time
 from pathlib import Path
 
-from . import bronze, embeddings, entrega, narrativas, silver
+from . import bronze, coordinacion, embeddings, entrega, llm, narrativas, silver
 from .lago import Lago
 
-ETAPAS = ["bronze", "silver", "embeddings", "narrativas", "entrega"]
+ETAPAS = ["bronze", "silver", "embeddings", "coordinacion", "narrativas", "entrega"]
 
 
 def hardware() -> str:
@@ -45,6 +45,8 @@ def main():
                 print(f"  calidad  {c['tabla']:<14} {c['chequeo']:<34} {c['filas']}")
         elif etapa == "embeddings":
             print("embeddings:", json.dumps(embeddings.correr(lago)))
+        elif etapa == "coordinacion":
+            print("coordinacion:", json.dumps(coordinacion.correr(lago)))
         elif etapa == "narrativas":
             print("narrativas:", json.dumps(narrativas.correr(lago)))
         elif etapa == "entrega":
@@ -52,10 +54,13 @@ def main():
             n = con.execute(f"SELECT count(*) FROM {lago.leer('silver', 'comentarios')}").fetchall()[0][0]
             con.close()
             segundos = round(time.time() - inicio, 1)
-            costo = {"comentarios_procesados": n, "segundos": segundos, "tokens_ia": 0, "usd_ia": 0.0,
+            tokens = llm.USO["tokens_entrada"] + llm.USO["tokens_salida"]
+            uso_llm = (f"LLM local {llm.USO['modelo']} ({llm.USO['llamadas']} llamadas, solo para elegir "
+                       "el lado que afirma y titular cada narrativa)" if llm.USO["llamadas"] else "sin LLM")
+            costo = {"comentarios_procesados": n, "segundos": segundos, "tokens_ia": tokens, "usd_ia": 0.0,
                      "usd_por_mil_comentarios": 0.0, "hardware": hardware(),
                      "almacenamiento": "DuckDB sobre Parquet, capas bronze/silver/gold",
-                     "notas": f"embeddings locales ({embeddings.MODELO}); sin LLM", "etapas_segundos": tiempos}
+                     "notas": f"embeddings locales ({embeddings.MODELO}); {uso_llm}", "etapas_segundos": tiempos}
             print("entrega:", json.dumps(entrega.correr(lago, args.entrega, costo)))
         tiempos[etapa] = round(time.time() - t, 2)
         print(f"  {etapa} en {tiempos[etapa]} s")

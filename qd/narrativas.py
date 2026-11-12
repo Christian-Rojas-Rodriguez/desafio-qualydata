@@ -12,7 +12,8 @@
    respuestas, propagada a los textos vecinos que no tienen respuestas.
 5. Postura: dentro de cada narrativa la mayoría de las respuestas contradice al
    padre, así que los lados salen de un corte máximo del grafo de respuestas.
-   Qué lado "apoya" lo decide `postura.elegir_lado` (LLM o marcadores).
+   Las respuestas entre cuentas de una misma operación coordinada no cuentan: se
+   dan la razón. Qué lado "apoya" lo decide `postura.elegir_lado`.
 6. Comentarios: las respuestas heredan la narrativa del padre; las genéricas
    heredan también la postura.
 7. Origen: primer comentario que inicia una racha sostenida de la narrativa.
@@ -129,9 +130,16 @@ def correr(lago: Lago, p: dict = None) -> dict:
     txt_de = {t: i for i, t in enumerate(ids)}
 
     com = con.execute(f"""
-        SELECT comentario_id, texto_id, respuesta_a, epoch(ts) AS ts, n_tokens, texto_norm, texto_limpio
+        SELECT comentario_id, texto_id, respuesta_a, epoch(ts) AS ts, n_tokens, texto_norm, texto_limpio,
+               cuenta_id
         FROM {lago.leer('silver', 'comentarios')} ORDER BY ts, comentario_id
     """).fetchall()
+    # Operaciones coordinadas detectadas (si ya corrió esa etapa): sus cuentas se dan
+    # la razón entre sí y empujan el lado que afirma la narrativa.
+    grupo_de = {}
+    if lago.ruta("gold", "cuentas_grupo").exists():
+        grupo_de = dict(con.execute(f"SELECT cuenta_id, grupo FROM {lago.leer('gold', 'cuentas_grupo')}").fetchall())
+    grupo_com = [grupo_de.get(r[7]) for r in com]
     n_com = len(com)
     cid = [r[0] for r in com]
     pos = {c: i for i, c in enumerate(cid)}
@@ -171,13 +179,23 @@ def correr(lago: Lago, p: dict = None) -> dict:
         narr_de_mc[m] = comunidad[loc[m]]
 
     # --- 4. reasignación por texto -----------------------------------------
+    # Un texto largo que cayó en un micro-cluster genérico no es "tal cual": su
+    # narrativa la decide la evidencia, igual que un texto de un cluster mezclado.
+    tok_txt = np.zeros(n_txt, int)
+    tok_txt[txt] = [r[4] for r in com]
+    es_gen_mc = np.array([tipo[m] == "generico" for m in range(n_mc)])
+    generico_txt = es_gen_mc[mc] & (tok_txt <= p["tokens_generico"])
+    activo = es_narr_mc[mc] | (es_gen_mc[mc] & ~generico_txt)
+    capaz = activo[txt]
+    pares_texto = [(h, padre[h]) for h in hijos if capaz[h] and capaz[padre[h]]]
     votos = np.zeros((n_txt, n_narr))
-    for a, b in pares:
-        votos[txt[a], narr_de_mc[cm[b]]] += 1
-        votos[txt[b], narr_de_mc[cm[a]]] += 1
+    for a, b in pares_texto:
+        if narr_de_mc[cm[b]] >= 0:
+            votos[txt[a], narr_de_mc[cm[b]]] += 1
+        if narr_de_mc[cm[a]] >= 0:
+            votos[txt[b], narr_de_mc[cm[a]]] += 1
     # La evidencia (votos de respuestas) se difunde por el grafo de textos parecidos;
     # la etiqueta del micro-cluster solo decide donde no llega evidencia.
-    activo = es_narr_mc[mc]
     S = sp.csr_matrix((vsim.ravel(), (src, vidx.ravel())), shape=(n_txt, n_txt))
     D = sp.diags(activo.astype(np.float32))
     S = (D @ S.maximum(S.T) @ D).tocsr()
@@ -191,9 +209,10 @@ def correr(lago: Lago, p: dict = None) -> dict:
     # --- 5. postura: nodos = (micro-cluster, narrativa) ---------------------
     nodo_de_txt = {t: (int(mc[t]), int(narr_txt[t])) for t in range(n_txt) if narr_txt[t] >= 0}
     pesos_nodo = Counter()
-    for a, b in pares:
+    for a, b in pares_texto:
         na, nb = nodo_de_txt.get(txt[a]), nodo_de_txt.get(txt[b])
-        if na and nb and na != nb and na[1] == nb[1]:
+        misma_operacion = grupo_com[a] is not None and grupo_com[a] == grupo_com[b]
+        if na and nb and na != nb and na[1] == nb[1] and not misma_operacion:
             pesos_nodo[tuple(sorted((na, nb)))] += 1
     nodos_por_narr = defaultdict(set)
     for nodo in nodo_de_txt.values():
@@ -202,11 +221,12 @@ def correr(lago: Lago, p: dict = None) -> dict:
     for t, nodo in nodo_de_txt.items():
         centroide.setdefault(nodo, []).append(t)
     centroide = {nodo: X[ts].mean(0) for nodo, ts in centroide.items()}
-    textos_raiz = defaultdict(lambda: {"limpio": [], "norm": []})
+    textos_raiz = defaultdict(lambda: {"limpio": [], "norm": [], "coordinados": 0})
     for i, r in enumerate(com):
         if padre[i] < 0 and txt[i] in nodo_de_txt:
             textos_raiz[nodo_de_txt[txt[i]]]["limpio"].append(r[6])
             textos_raiz[nodo_de_txt[txt[i]]]["norm"].append(r[5])
+            textos_raiz[nodo_de_txt[txt[i]]]["coordinados"] += grupo_com[i] is not None
 
     lado_de_nodo, info_lados = {}, {}
     for n, nodos in nodos_por_narr.items():
@@ -219,8 +239,10 @@ def correr(lago: Lago, p: dict = None) -> dict:
                 lado[nodo] = lado[cerca]
             else:
                 lado[nodo] = 0
-        lados = [{c: [t for nodo in nodos if lado[nodo] == s for t in textos_raiz[nodo][c]]
-                  for c in ("limpio", "norm")} for s in (0, 1)]
+        lados = [{**{c: [t for nodo in nodos if lado[nodo] == s for t in textos_raiz[nodo][c]]
+                     for c in ("limpio", "norm")},
+                  "coordinados": sum(textos_raiz[nodo]["coordinados"] for nodo in nodos if lado[nodo] == s)}
+                 for s in (0, 1)]
         apoya, info = postura.elegir_lado(lados[0], lados[1])
         info_lados[n] = info
         for nodo in nodos:
@@ -236,7 +258,7 @@ def correr(lago: Lago, p: dict = None) -> dict:
             narr[i] = narr[q]
             if nodo and f"n{nodo[1]:02d}" == narr[i]:
                 post[i] = lado_de_nodo[nodo]
-            elif tipo[cm[i]] == "generico":
+            elif generico_txt[txt[i]]:
                 post[i] = post[q]
             else:
                 post[i] = "rechaza" if post[q] == "apoya" else "apoya"
@@ -280,4 +302,5 @@ def correr(lago: Lago, p: dict = None) -> dict:
     con.close()
     return {"micro_clusters": n_mc, "tipos": dict(Counter(tipo.values())), "narrativas": len(filas_narr),
             "textos_reasignados": int(((narr_txt != narr_de_mc[mc]) & activo).sum()),
+            "textos_largos_rescatados": int((es_gen_mc[mc] & ~generico_txt & (narr_txt >= 0)).sum()),
             "ruido": sum(1 for x in narr if not x)}
