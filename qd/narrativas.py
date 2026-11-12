@@ -37,6 +37,8 @@ PARAMS = {
     "resolucion_narrativas": 1.0,
     "peso_voto": 2.0,             # cuánto pesa un voto de respuesta frente a un vecino de texto
     "rondas_propagacion": 3,
+    "rondas_postura": 3,
+    "umbral_postura": 1.0,        # evidencia mínima para que un texto cambie de lado
     "origen_ventana_h": 6,        # racha: al menos `origen_min` comentarios en esta ventana
     "origen_min": 5,
     "semilla": 0,
@@ -221,14 +223,7 @@ def correr(lago: Lago, p: dict = None) -> dict:
     for t, nodo in nodo_de_txt.items():
         centroide.setdefault(nodo, []).append(t)
     centroide = {nodo: X[ts].mean(0) for nodo, ts in centroide.items()}
-    textos_raiz = defaultdict(lambda: {"limpio": [], "norm": [], "coordinados": 0})
-    for i, r in enumerate(com):
-        if padre[i] < 0 and txt[i] in nodo_de_txt:
-            textos_raiz[nodo_de_txt[txt[i]]]["limpio"].append(r[6])
-            textos_raiz[nodo_de_txt[txt[i]]]["norm"].append(r[5])
-            textos_raiz[nodo_de_txt[txt[i]]]["coordinados"] += grupo_com[i] is not None
-
-    lado_de_nodo, info_lados = {}, {}
+    lado_nodo = {}
     for n, nodos in nodos_por_narr.items():
         pn = {e: w for e, w in pesos_nodo.items() if e[0][1] == n}
         conectados = {x for e in pn for x in e}
@@ -239,32 +234,68 @@ def correr(lago: Lago, p: dict = None) -> dict:
                 lado[nodo] = lado[cerca]
             else:
                 lado[nodo] = 0
-        lados = [{**{c: [t for nodo in nodos if lado[nodo] == s for t in textos_raiz[nodo][c]]
-                     for c in ("limpio", "norm")},
-                  "coordinados": sum(textos_raiz[nodo]["coordinados"] for nodo in nodos if lado[nodo] == s)}
-                 for s in (0, 1)]
+        lado_nodo.update(lado)
+
+    # --- 5b. refinamiento por texto: un micro-cluster puede mezclar posturas
+    # ("todo para la foto" y "no tiene sentido lo de la foto"). Cada texto vota en
+    # contra del lado de quien le responde o a quien responde, y el voto se suaviza
+    # entre textos parecidos de la misma narrativa.
+    signo = np.zeros(n_txt)
+    for t, nodo in nodo_de_txt.items():
+        signo[t] = 1.0 if lado_nodo[nodo] == 0 else -1.0
+    contra = [(txt[a], txt[b]) for a, b in pares_texto
+              if txt[a] != txt[b] and narr_txt[txt[a]] >= 0 and narr_txt[txt[a]] == narr_txt[txt[b]]
+              and not (grupo_com[a] is not None and grupo_com[a] == grupo_com[b])]
+    ca = np.array([x for x, _ in contra], dtype=np.int64)
+    cb = np.array([y for _, y in contra], dtype=np.int64)
+    Sc = S.tocoo()
+    misma = narr_txt[Sc.row] == narr_txt[Sc.col]
+    Sn = sp.csr_matrix((Sc.data[misma], (Sc.row[misma], Sc.col[misma])), shape=S.shape)
+    Sn = sp.diags(1 / np.maximum(np.asarray(Sn.sum(1)).ravel(), 1e-9)) @ Sn
+    for _ in range(p["rondas_postura"]):
+        voto = np.zeros(n_txt)
+        np.add.at(voto, ca, -signo[cb])
+        np.add.at(voto, cb, -signo[ca])
+        suave = voto + 0.5 * (Sn @ voto)
+        signo = np.where(np.abs(suave) >= p["umbral_postura"], np.sign(suave), signo)
+
+    raiz_de_txt = defaultdict(list)
+    for i in range(n_com):
+        if padre[i] < 0 and narr_txt[txt[i]] >= 0:
+            raiz_de_txt[txt[i]].append(i)
+    lado_txt, info_lados = {}, {}
+    textos_por_narr = defaultdict(list)
+    for t in nodo_de_txt:
+        textos_por_narr[int(narr_txt[t])].append(t)
+    for n, ts_n in textos_por_narr.items():
+        lados = []
+        for s_ in (1.0, -1.0):
+            idx = [i for t in ts_n if signo[t] == s_ for i in raiz_de_txt[t]]
+            lados.append({"limpio": [com[i][6] for i in idx], "norm": [com[i][5] for i in idx],
+                          "coordinados": sum(grupo_com[i] is not None for i in idx)})
         apoya, info = postura.elegir_lado(lados[0], lados[1])
         info_lados[n] = info
-        for nodo in nodos:
-            lado_de_nodo[nodo] = "apoya" if lado[nodo] == apoya else "rechaza"
+        signo_apoya = 1.0 if apoya == 0 else -1.0
+        for t in ts_n:
+            lado_txt[t] = "apoya" if signo[t] == signo_apoya else "rechaza"
 
     # --- 6. asignación por comentario (orden temporal: el padre ya está) ---
     narr = [""] * n_com
     post = [""] * n_com
     for i in range(n_com):
-        nodo = nodo_de_txt.get(txt[i])
+        t = txt[i]
         q = padre[i]
         if q >= 0 and narr[q]:
             narr[i] = narr[q]
-            if nodo and f"n{nodo[1]:02d}" == narr[i]:
-                post[i] = lado_de_nodo[nodo]
-            elif generico_txt[txt[i]]:
+            if t in lado_txt and f"n{narr_txt[t]:02d}" == narr[i]:
+                post[i] = lado_txt[t]
+            elif generico_txt[t]:
                 post[i] = post[q]
             else:
                 post[i] = "rechaza" if post[q] == "apoya" else "apoya"
-        elif nodo:
-            narr[i] = f"n{nodo[1]:02d}"
-            post[i] = lado_de_nodo[nodo]
+        elif t in lado_txt:
+            narr[i] = f"n{narr_txt[t]:02d}"
+            post[i] = lado_txt[t]
 
     # --- 7. tabla de narrativas --------------------------------------------
     ts = np.array([r[3] for r in com])
