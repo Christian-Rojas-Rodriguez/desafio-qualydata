@@ -1,38 +1,62 @@
 """Pipeline QualyData: un comando de punta a punta.
 
-    python -m qd --datos datos/practica                 # todas las capas disponibles
-    python -m qd --datos datos/practica --hasta silver  # cortar en una capa
+    python -m qd --datos datos/practica --entrega salida/practica
+    python -m qd --datos datos/final --entrega entrega
+    python -m qd --datos datos/practica --hasta silver   # cortar en una etapa
 """
 import argparse
 import json
+import platform
 import time
 from pathlib import Path
 
-from . import bronze, silver
+from . import bronze, embeddings, entrega, narrativas, silver
 from .lago import Lago
 
-ETAPAS = ["bronze", "silver"]
+ETAPAS = ["bronze", "silver", "embeddings", "narrativas", "entrega"]
+
+
+def hardware() -> str:
+    import os
+    memoria = os.sysconf("SC_PAGE_SIZE") * os.sysconf("SC_PHYS_PAGES") / 2**30
+    return f"{platform.machine()} {platform.system()}, {os.cpu_count()} núcleos, {memoria:.0f} GB RAM, " \
+           f"aceleración {embeddings.dispositivo()}"
 
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--datos", type=Path, required=True, help="Carpeta con los CSV del set")
+    ap.add_argument("--entrega", type=Path, default=Path("entrega"), help="Carpeta de salida de la entrega")
     ap.add_argument("--lago", type=Path, help="Destino de las capas (por defecto lake/<nombre del set>)")
     ap.add_argument("--hasta", choices=ETAPAS, default=ETAPAS[-1])
     args = ap.parse_args()
     lago = Lago(args.lago or Path("lake") / args.datos.name)
 
     tiempos = {}
+    inicio = time.time()
     for etapa in ETAPAS[: ETAPAS.index(args.hasta) + 1]:
         t = time.time()
         if etapa == "bronze":
-            resultado = bronze.correr(args.datos, lago)
-            print("bronze:", json.dumps(resultado, ensure_ascii=False))
+            print("bronze:", json.dumps(bronze.correr(args.datos, lago), ensure_ascii=False))
         elif etapa == "silver":
             resultado = silver.correr(lago)
             print("silver:", json.dumps(resultado["filas"]))
             for c in resultado["chequeos"]:
                 print(f"  calidad  {c['tabla']:<14} {c['chequeo']:<34} {c['filas']}")
+        elif etapa == "embeddings":
+            print("embeddings:", json.dumps(embeddings.correr(lago)))
+        elif etapa == "narrativas":
+            print("narrativas:", json.dumps(narrativas.correr(lago)))
+        elif etapa == "entrega":
+            con = lago.conectar()
+            n = con.execute(f"SELECT count(*) FROM {lago.leer('silver', 'comentarios')}").fetchall()[0][0]
+            con.close()
+            segundos = round(time.time() - inicio, 1)
+            costo = {"comentarios_procesados": n, "segundos": segundos, "tokens_ia": 0, "usd_ia": 0.0,
+                     "usd_por_mil_comentarios": 0.0, "hardware": hardware(),
+                     "almacenamiento": "DuckDB sobre Parquet, capas bronze/silver/gold",
+                     "notas": f"embeddings locales ({embeddings.MODELO}); sin LLM", "etapas_segundos": tiempos}
+            print("entrega:", json.dumps(entrega.correr(lago, args.entrega, costo)))
         tiempos[etapa] = round(time.time() - t, 2)
         print(f"  {etapa} en {tiempos[etapa]} s")
     lago.catalogar()
