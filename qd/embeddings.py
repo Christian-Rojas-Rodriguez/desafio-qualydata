@@ -23,7 +23,8 @@ def dispositivo() -> str:
 
 def correr(lago: Lago, modelo: str = MODELO, lote: int = 128) -> dict:
     con = lago.conectar()
-    textos = con.execute(f"SELECT texto_id, texto_limpio FROM {lago.leer('silver', 'textos')}").fetchall()
+    textos = con.execute(f"SELECT texto_id, texto_limpio FROM {lago.leer('silver', 'textos')} "
+                         "ORDER BY texto_id").fetchall()
     destino = lago.ruta("gold", "embeddings")
     previos = {}
     if destino.exists():

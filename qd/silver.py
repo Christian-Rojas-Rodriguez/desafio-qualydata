@@ -202,11 +202,19 @@ def correr(lago: Lago) -> dict:
     """)
 
     # --- textos únicos: base para embeddings -----------------------------
+    # Orden y representante deterministas: el resultado no puede depender de empates.
     lago.escribir(con, "silver", "textos", f"""
-        SELECT texto_id, texto_norm, mode(texto_limpio) AS texto_limpio, any_value(n_tokens) AS n_tokens,
-               count(*) AS n_comentarios, count(DISTINCT cuenta_id) AS n_cuentas,
-               count(DISTINCT publicacion_id) AS n_publicaciones, min(ts) AS primera_vez
-        FROM {sc} GROUP BY texto_id, texto_norm ORDER BY n_comentarios DESC
+        WITH variantes AS (
+            SELECT texto_id, texto_limpio, count(*) AS n FROM {sc} GROUP BY 1, 2
+        ), representante AS (
+            SELECT texto_id, first(texto_limpio ORDER BY n DESC, texto_limpio) AS texto_limpio
+            FROM variantes GROUP BY 1
+        )
+        SELECT c.texto_id, c.texto_norm, r.texto_limpio, any_value(c.n_tokens) AS n_tokens,
+               count(*) AS n_comentarios, count(DISTINCT c.cuenta_id) AS n_cuentas,
+               count(DISTINCT c.publicacion_id) AS n_publicaciones, min(c.ts) AS primera_vez
+        FROM {sc} c JOIN representante r USING (texto_id)
+        GROUP BY c.texto_id, c.texto_norm, r.texto_limpio ORDER BY n_comentarios DESC, c.texto_id
     """)
 
     lago.escribir(con, "silver", "rechazos", " UNION ALL ".join(rechazos))
