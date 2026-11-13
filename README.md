@@ -7,7 +7,10 @@ rechaza y desde cuándo, y detecta las **cuentas coordinadas** que las empujan.
 - **Un comando**, de punta a punta, sin servidor y sin claves.
 - **US$0 de IA**: embeddings y LLM corren locales; ~2 minutos para 200k comentarios en una Mac.
 - **53.25 / 55** en la parte automática del set de práctica; **51.9 ± 0.6** en validación
-  cruzada corriendo desde cero sobre el 80% de los datos ([docs/validacion.md](docs/validacion.md)).
+  cruzada corriendo desde cero sobre el 80% de los datos, y **53.36** entrenando con los
+  primeros 12 días ([docs/validacion.md](docs/validacion.md)).
+- **Set final** (`entrega/`): 150.000 comentarios en 98 s desde cero, 12 narrativas,
+  17,8% de ruido, 3 operaciones coordinadas con 94 cuentas, 10/10 supuestos del EDA verificados.
 
 ## Cómo correr
 
