@@ -19,6 +19,7 @@ python3.12 -m venv .venv && .venv/bin/pip install -r requirements.txt
 make practica    # pipeline sobre datos/practica y puntaje
 make final       # pipeline sobre datos/final → entrega/
 make verificar   # re-corre el final desde cero y compara con las huellas SHA256 de costo.json
+make tablero     # docs/resultados.html: qué circula, desde cuándo y quién lo empuja
 ```
 
 Sin `make`:
@@ -47,6 +48,7 @@ entrega/       resultado sobre el set final
 
 | Para entender... | Leé |
 |---|---|
+| **Qué encontramos en el set final** (abrir en el navegador) | [docs/resultados.html](docs/resultados.html) |
 | Qué piden y cómo puntúa | [docs/consigna.md](docs/consigna.md) |
 | Cómo fluyen los datos y qué hace cada módulo | [docs/arquitectura.md](docs/arquitectura.md) |
 | Qué tabla y columna hay en cada capa | [docs/datos.md](docs/datos.md) |
