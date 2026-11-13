@@ -22,6 +22,7 @@ separar train y test); desde entonces, ver [validacion.md](validacion.md).
 | 13/11 | Validación con corte temporal (`--modo dias`) | días 1–12 / 12–14 | train 53.36; test: B-cubed 0.968, postura 0.749, 0 genuinas marcadas | queda; ver validacion.md |
 | 13/11 | Desempate de postura por probabilidad del LLM (en vez de marcadores) | 7 partes train | indecisas 8/11 → 3/11; total 83/90 → 78/90 | revertido: quedan los marcadores |
 | 13/11 | Título de respaldo: afirmación más repetida, sin preguntas | práctica | solo cambia títulos | queda |
+| 13/11 | Huella SHA256 en `costo.json` y `make verificar`; `docs/contrato.md`; página de resultados (`make tablero`) | final | la entrega se reproduce byte a byte | queda |
 
 ## Pendientes conocidos
 

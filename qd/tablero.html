@@ -159,6 +159,14 @@ code { font: 13.5px var(--mono); background: rgba(0, 0, 0, 0.05); padding: 1px 5
       parecida, elegidas al azar con semilla fija. En una operación los puntos se alinean en columnas: las cuentas
       comentan juntas. La línea vertical marca el origen de la narrativa que empujan.</figcaption>
   </figure></div></section>
+  <section class="cuerpo">
+    <aside><b>Por qué no alcanza con un par:</b> entre millones de pares de cuentas, algunos coinciden por azar. Una campaña, en cambio, es densa: cada cuenta coincide con varias otras del grupo.</aside>
+    <p id="txt-grafo" style="margin-top:32px"></p>
+  </section>
+  <section class="banda"><div class="ancho"><figure>
+    <div id="fig-grafo"></div>
+    <figcaption id="cap-grafo"></figcaption>
+  </figure></div></section>
 
   <section class="cuerpo">
     <h2><span class="num">4</span>Cómo se obtuvo</h2>
@@ -331,6 +339,37 @@ D.grupos.forEach(g => {
     filas.forEach((ts, i) => ts.forEach(s => el("circle", {cx: x(s), cy: i * fila + 3, r: 1.7, fill: color}, svg)));
   });
 });
+
+// --- 4. grafo de pares -------------------------------------------------------
+(function () {
+  const G = D.grafo, svg = el("svg", {class: "fluido", viewBox: `0 0 ${G.ancho} ${G.alto}`}, document.getElementById("fig-grafo"));
+  const pares = G.cajas.reduce((s, c) => s + c.aristas.length, 0) + G.sueltos.aristas.length;
+  set("txt-grafo", `La misma evidencia, vista como red. De millones de pares de cuentas, solo <b>${fmt(pares)}</b> coinciden más de lo
+    que explica el azar. Casi todos forman tres islas densas, que son las operaciones. Los otros ${G.sueltos.aristas.length}
+    son pares o cadenas sueltas de cuentas genuinas: superan el umbral, pero no forman un núcleo denso y <b>no se marcan</b>.`);
+  set("cap-grafo", `<span class="etiqueta-fig">Figura 4.</span> Cada nodo es una cuenta y cada línea, un par que coincide mucho más de lo
+    esperable; el grosor crece con la cantidad de coincidencias. Nodo lleno: núcleo de la operación. Nodo vacío: cuenta sumada
+    después, por comentar en sincronía con el grupo. En gris, abajo, los pares que no llegan a formar un núcleo denso.`);
+  const dibujar = (nodos, aristas, color, lleno) => {
+    aristas.forEach(([i, j, k]) => el("line", {x1: nodos[i].x, y1: nodos[i].y, x2: nodos[j].x, y2: nodos[j].y,
+      stroke: color, "stroke-opacity": .28, "stroke-width": Math.min(.6 + .35 * k, 3)}, svg));
+    nodos.forEach(q => {
+      const c = el("circle", {cx: q.x, cy: q.y, r: 4.2, fill: lleno(q) ? color : "var(--banda)", stroke: color, "stroke-width": 1.5}, svg);
+      c.addEventListener("mousemove", e => mostrar(e, `<b>${q.id}</b><br>${fmt(q.n)} comentarios` + (q.edad == null ? "" : `<br>cuenta de ${anios(q.edad)}`)));
+      c.addEventListener("mouseleave", ocultar);
+    });
+  };
+  G.cajas.forEach(c => {
+    const g = D.grupos.find(x => x.id === c.grupo);
+    el("text", {x: c.x, y: 12, "font-weight": 600, fill: "var(--tinta)"}, svg).textContent =
+      `${c.grupo} · ${c.nodos.length} cuentas · ${c.aristas.length} pares`;
+    dibujar(c.nodos, c.aristas, "var(--pizarra)", q => q.nucleo);
+  });
+  el("line", {x1: 0, x2: G.ancho, y1: G.corte + 6, y2: G.corte + 6, stroke: "var(--linea)"}, svg);
+  el("text", {x: 0, y: G.corte + 24, "font-weight": 600, fill: "var(--tinta-2)"}, svg).textContent =
+    `No marcadas · ${G.sueltos.nodos.length} cuentas · ${G.sueltos.aristas.length} pares en ${G.sueltos.componentes} grupos sueltos (el mayor, de ${G.sueltos.mayor} cuentas)`;
+  dibujar(G.sueltos.nodos, G.sueltos.aristas, "rgba(0,0,0,0.38)", () => true);
+})();
 
 set("notas", `Generado con <code>python -m qd.tablero</code> a partir de las capas gold del set final. La entrega se
   reproduce byte a byte con <code>make verificar</code>; procesar el set tomó ${fmt(D.costo.segundos)} s en ${D.costo.hardware || "una notebook"},
