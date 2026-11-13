@@ -17,6 +17,7 @@ validar:  ## validación cruzada (etiquetas es rápido; datos y tema corren el p
 	$(PY) -m qd.validacion --modo etiquetas
 	$(PY) -m qd.validacion --modo tema
 	$(PY) -m qd.validacion --modo datos
+	$(PY) -m qd.validacion --modo dias
 
 eda:  ## ejecuta el notebook de EDA y guarda las salidas
 	$(PY) -m jupyter nbconvert --to notebook --execute --inplace notebooks/01_eda_practica.ipynb

@@ -19,9 +19,12 @@ separar train y test); desde entonces, ver [validacion.md](validacion.md).
 | 12/11 | Origen: sin textos genéricos y racha ∝ tamaño (5 → max(5, 0,5%·n)) | origen en train / test | 0.81 → 0.95 / 0.49 → 0.82 | queda; práctica completa sigue en 53.25 |
 | 12/11 | EDA documentado (`notebooks/01_eda_practica.ipynb`) y etapa `supuestos` que verifica en cada corrida lo que el EDA dio por cierto | práctica | 10/10 chequeos ok | queda; el viernes avisa si el final rompe alguno |
 | 12/11 | Coordinación: núcleo solo si su 2-core tiene ≥ 4 cuentas (las cadenas sueltas de genuinas no cuentan) | coord. en train / test | genuinas 7 → 3, 23.59 → 23.65 / genuinas 52 → 7, 14.14 → 14.16 | queda; práctica completa sigue en 53.25 |
+| 13/11 | Validación con corte temporal (`--modo dias`) | días 1–12 / 12–14 | train 53.36; test: B-cubed 0.968, postura 0.749, 0 genuinas marcadas | queda; ver validacion.md |
 
 ## Pendientes conocidos
 
-- B3 y H3 con postura invertida (< 0,6 puntos en práctica).
+- B3 y H3 con postura invertida (< 0,6 puntos en práctica). En el corte temporal también L2:
+  sin campaña visible, el LLM no decide y los marcadores eligen mal.
+- Título de respaldo (sin LLM) puede ser una pregunta suelta absorbida por la narrativa.
 - C2 (cuentas viejas, textos variados) pierde 2–9 de 30 cuentas en train y casi desaparece
   con el 20% de los datos.

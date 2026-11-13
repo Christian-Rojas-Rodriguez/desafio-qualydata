@@ -18,6 +18,7 @@ reportamos. **Regla: las decisiones se toman con métricas de train; test solo s
 | `etiquetas` | Una corrida sobre todo el set; las métricas se calculan aparte con etiquetas de train y de test. | Variabilidad entre folds. |
 | `datos` | El pipeline corre desde cero sobre el 80% y sobre el 20%, en lagos separados. | Que los umbrales se adapten al tamaño. El 80% (~160k) tiene el tamaño del set final (~150k). |
 | `tema` | El pipeline corre sobre un solo tema. | Lo más parecido a "temas y campañas nuevos". Colectivo no tiene campaña: prueba falsos positivos. |
+| `dias` | Publicaciones ordenadas por fecha: las más viejas (80% de los comentarios) son train, las más nuevas test. | Días no vistos, campañas que ya terminaron, narrativas que cambiaron de redacción. |
 
 ## ¿Las cuentas cruzan de lado?
 
@@ -48,3 +49,28 @@ Lectura:
   muchas cuentas de campaña tienen un solo comentario, y C2 (cuentas viejas repartidas en
   muchas publicaciones) casi no coincide. En train (160k comentarios, tamaño parecido al
   final) C1 y C3 salen casi completas; a C2 le faltan 2–9 cuentas de 30.
+
+## Corte temporal (13 nov, `--modo dias`)
+
+Train: publicaciones del 1/9 al 12/9 09:35 (160k comentarios). Test: las 102 publicaciones
+siguientes, hasta el 14/9 (40k). Cada publicación queda entera de su lado (el 87% recibe
+comentarios en más de un día). En test, una narrativa es emergente solo si nace ahí.
+
+| Parte | Total /55 | B-cubed | Ruido | Postura | Origen | F1 cuentas | Genuinas marcadas |
+|---|---|---|---|---|---|---|---|
+| Train (días 1–12) | 53.36 | 0.994 | 0.948 | 0.972 | 1.00 | 0.964 | 0 |
+| Test (días 12–14) | 24.53 | 0.968 | 0.908 | 0.749 | — | 0.0 | 0 |
+
+Lectura:
+- **El total de test no es comparable**: no nace ninguna emergente en los últimos 2,5 días
+  (origen = 0 por construcción, −4,5 puntos) y las campañas casi terminaron (C1: 2 cuentas
+  con 1 comentario; C3: ninguna; C2: 17 cuentas con ~4 comentarios cada una).
+- **El agrupamiento generaliza a días no vistos**: B-cubed 0.968; L1, que cambia de redacción
+  desde el día 8, se reconoce igual (0.955 de postura). Une H1 con H4 (12 de 13 narrativas).
+- **Coordinación no inventa**: sin campañas activas no marca a nadie (0 genuinas).
+- **Postura: dos narrativas invertidas.** B3 (pendiente conocido) y **L2**: en train su lado
+  lo decide la campaña C1; sin C1 en test, las dos lecturas del LLM no coinciden y los
+  marcadores de refutación eligen mal. La postura depende de que haya una campaña visible.
+- **Títulos**: cuando el LLM no decide, el título es el texto más repetido del lado que
+  apoya, y puede ser una pregunta suelta absorbida ("Qué opinan los que viven en la zona?").
+

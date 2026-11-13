@@ -21,10 +21,15 @@ Modos:
              umbrales se adapten a otro tamaño.
   tema       un tema oculto por fold: el pipeline corre solo sobre ese tema.
              Es lo más parecido a "el final trae otros temas y campañas".
+  dias       corte temporal: las publicaciones más viejas (80% de los comentarios)
+             son train y las más nuevas test, cada una entera de su lado. Prueba
+             días que el sistema no vio, con narrativas que ya cambiaron de
+             redacción. En test una narrativa cuenta como emergente solo si nace ahí.
 
     python -m qd.validacion --modo etiquetas
     python -m qd.validacion --modo datos --folds 5
     python -m qd.validacion --modo tema
+    python -m qd.validacion --modo dias
 """
 import argparse
 import importlib.util
@@ -101,7 +106,22 @@ def folds_cuentas(con, k: int, semilla: int) -> dict:
     return fold
 
 
-def escribir_verdad(con, destino: Path, subconjunto: bool):
+def corte_temporal(con, fraccion: float):
+    """(train, test): publicaciones ordenadas por fecha; train junta la `fraccion` de los comentarios."""
+    filas = con.execute("""
+        WITH pubs AS (SELECT publicacion_id, min(try_cast(fecha AS TIMESTAMPTZ)) AS t FROM p GROUP BY 1),
+        com AS (SELECT publicacion_id, count(*) AS n, min(try_cast(fecha AS TIMESTAMPTZ)) AS t FROM c GROUP BY 1)
+        SELECT publicacion_id, coalesce(com.n, 0)
+        FROM pubs FULL JOIN com USING (publicacion_id) ORDER BY coalesce(pubs.t, com.t) NULLS LAST, 1
+    """).fetchall()
+    total, acumulado, train, test = sum(n for _, n in filas), 0, [], []
+    for pub, n in filas:
+        (train if acumulado < fraccion * total else test).append(pub)
+        acumulado += n
+    return train, test
+
+
+def escribir_verdad(con, destino: Path, subconjunto: bool, emergentes_en_parte: bool = False):
     """Verdad restringida a las tablas temporales sel_com y sel_cuentas.
 
     Con `subconjunto` (el pipeline solo vio esa parte de los datos):
@@ -110,6 +130,8 @@ def escribir_verdad(con, destino: Path, subconjunto: bool):
       la narrativa de su campaña. Las cuentas de campaña también comentan en otros
       temas como cobertura; si la parte no incluye su operación, no hay nada que
       detectar y se excluyen de la evaluación (ni acierto ni error).
+    Con `emergentes_en_parte`, una narrativa es emergente solo si su publicación de
+    origen está en la parte (en un corte temporal, las que nacieron antes ya existen).
     """
     destino.mkdir(parents=True, exist_ok=True)
     con.execute(f"COPY (SELECT vc.* FROM vc SEMI JOIN sel_com USING (comentario_id) ORDER BY 1) "
@@ -122,8 +144,10 @@ def escribir_verdad(con, destino: Path, subconjunto: bool):
     con.execute(f"COPY ({cuentas} ORDER BY 1) TO '{destino / 'cuentas.csv'}' (HEADER)")
     origen = ("(SELECT min(c.fecha) FROM c JOIN vc USING (comentario_id) SEMI JOIN sel_com USING (comentario_id) "
               "WHERE vc.narrativa_id = vn.narrativa_id)") if subconjunto else "vn.fecha_origen"
+    emergente = ("CASE WHEN vn.publicacion_origen IN (SELECT publicacion_id FROM sel_pub) THEN vn.emergente "
+                 "ELSE 'no' END") if emergentes_en_parte else "vn.emergente"
     con.execute(f"""
-        COPY (SELECT * REPLACE ({origen} AS fecha_origen) FROM vn
+        COPY (SELECT * REPLACE ({origen} AS fecha_origen, {emergente} AS emergente) FROM vn
               WHERE narrativa_id IN (SELECT DISTINCT narrativa_id FROM vc SEMI JOIN sel_com USING (comentario_id)))
         TO '{destino / 'narrativas.csv'}' (HEADER)
     """)
@@ -182,6 +206,7 @@ def medir(punt, verdad: Path, entrega: Path) -> dict:
         "grupos_bcubed": c["grupos_bcubed_f1"],
         "narrativas_reales": len(reales), "narrativas_predichas": len(predichas),
         "campanas_reales": len({x for x in verdad_cuentas.values() if x}),
+        "emergentes_reales": sum(1 for r in punt.open_csv(verdad / "narrativas.csv") if r["emergente"] == "si"),
         "genuinas_marcadas": sum(1 for u in marcadas if not verdad_cuentas[u]),
     }
 
@@ -196,15 +221,16 @@ def resumir(filas: list, parte: str) -> dict:
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--datos", type=Path, default=RAIZ / "datos" / "practica")
-    ap.add_argument("--modo", choices=["etiquetas", "datos", "tema"], required=True)
+    ap.add_argument("--modo", choices=["etiquetas", "datos", "tema", "dias"], required=True)
     ap.add_argument("--folds", type=int, default=5)
     ap.add_argument("--semilla", type=int, default=0)
+    ap.add_argument("--fraccion", type=float, default=0.8, help="Parte de train en el modo dias")
     ap.add_argument("--entrega", type=Path, default=RAIZ / "salida" / "practica",
                     help="Corrida completa a evaluar en el modo etiquetas")
     ap.add_argument("--salida", type=Path, default=RAIZ / "salida" / "validacion")
-    ap.add_argument("--sin-train", action="store_true", help="En datos/tema, no correr el pipeline sobre train")
+    ap.add_argument("--sin-train", action="store_true", help="En datos/tema/dias, no correr el pipeline sobre train")
     ap.add_argument("--solo-medir", action="store_true",
-                    help="En datos/tema, no volver a correr: medir las entregas que ya están")
+                    help="En datos/tema/dias, no volver a correr: medir las entregas que ya están")
     args = ap.parse_args()
 
     punt = puntuador()
@@ -213,7 +239,10 @@ def main():
     base = args.salida / args.modo
     filas = []
 
-    if args.modo == "tema":
+    if args.modo == "dias":
+        train, test = corte_temporal(con, args.fraccion)
+        particiones = [("corte", test, train)]
+    elif args.modo == "tema":
         particiones = [(t, [p for p, x in tema.items() if x == t], [p for p, x in tema.items() if x != t])
                        for t in sorted(set(tema.values())) if t != "sin_tema"]
     else:
@@ -240,7 +269,7 @@ def main():
                     continue
                 seleccionar(con, pubs)
                 carpeta = base / nombre / parte
-                escribir_verdad(con, carpeta / "verdad", subconjunto=True)
+                escribir_verdad(con, carpeta / "verdad", subconjunto=True, emergentes_en_parte=args.modo == "dias")
                 lago = RAIZ / "lake" / "validacion" / args.modo / nombre / parte
                 if args.solo_medir:
                     costo = json.loads((carpeta / "entrega" / "costo.json").read_text(encoding="utf-8"))
