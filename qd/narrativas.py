@@ -312,11 +312,14 @@ def correr(lago: Lago, p: dict = None) -> dict:
         propios = [i for i in idx if es_narr_mc[cm[i]]] or idx
         minimo = max(p["origen_min"], int(p["origen_fraccion"] * len(propios)))
         o = propios[origen(ts[propios] / 3600, p["origen_ventana_h"], minimo)]
-        apoyan = [com[i][6] for i in idx if post[i] == "apoya" and padre[i] < 0]
+        # Título de respaldo (sin LLM): la afirmación más repetida. Las preguntas que
+        # acompañan la narrativa ("La 4 pasa por el centro?") suelen ser más y no la nombran.
+        apoyan = [com[i][6] for i in propios if post[i] == "apoya" and padre[i] < 0]
+        apoyan = [t for t in apoyan if not t.rstrip().endswith("?")] or apoyan
         info = info_lados.get(int(n[1:]), {})
         filas_narr.append({
             "narrativa": n,
-            "titulo": info.get("titulo") or (Counter(apoyan).most_common(1)[0][0] if apoyan else com[idx[0]][6]),
+            "titulo": info.get("titulo") or (Counter(apoyan).most_common(1)[0][0] if apoyan else com[propios[0]][6]),
             "frases_clave": "|".join(terminos_clave([com[i][5] for i in idx], todos)),
             "fecha_origen_s": float(ts[o]), "comentarios": len(idx),
             "apoya": sum(post[i] == "apoya" for i in idx), "rechaza": sum(post[i] == "rechaza" for i in idx),
