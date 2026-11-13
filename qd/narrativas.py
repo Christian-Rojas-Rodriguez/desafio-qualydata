@@ -41,6 +41,7 @@ PARAMS = {
     "umbral_postura": 1.0,        # evidencia mínima para que un texto cambie de lado
     "origen_ventana_h": 6,        # racha: al menos `origen_min` comentarios en esta ventana
     "origen_min": 5,
+    "origen_fraccion": 0.005,     # ...y al menos esta fracción del tamaño de la narrativa
     "semilla": 0,
 }
 
@@ -306,7 +307,11 @@ def correr(lago: Lago, p: dict = None) -> dict:
             por_narr[n].append(i)
     filas_narr = []
     for n, idx in sorted(por_narr.items()):
-        o = idx[origen(ts[idx] / 3600, p["origen_ventana_h"], p["origen_min"])]
+        # El origen se busca entre los textos propios de la narrativa: los genéricos
+        # ("totalmente de acuerdo") que caen en ella temprano no la inician.
+        propios = [i for i in idx if es_narr_mc[cm[i]]] or idx
+        minimo = max(p["origen_min"], int(p["origen_fraccion"] * len(propios)))
+        o = propios[origen(ts[propios] / 3600, p["origen_ventana_h"], minimo)]
         apoyan = [com[i][6] for i in idx if post[i] == "apoya" and padre[i] < 0]
         info = info_lados.get(int(n[1:]), {})
         filas_narr.append({
