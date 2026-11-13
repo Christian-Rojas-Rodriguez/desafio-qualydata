@@ -2,6 +2,7 @@
 import json
 from pathlib import Path
 
+from . import huella
 from .lago import Lago
 
 
@@ -21,6 +22,8 @@ def correr(lago: Lago, destino: Path, costo: dict) -> dict:
     con.execute(f"""COPY (SELECT c.cuenta_id, coalesce(g.grupo, '') AS grupo
                           FROM {lago.leer('silver', 'cuentas')} c {origen_grupos} ORDER BY 1)
                     TO '{destino / 'cuentas.csv'}' (HEADER)""")
+    # La huella de las salidas va en costo.json: `python -m qd.huella` la verifica re-corriendo.
+    costo = {**costo, "salidas_sha256": huella.salidas(destino)}
     (destino / "costo.json").write_text(json.dumps(costo, ensure_ascii=False, indent=2), encoding="utf-8")
     con.close()
     return {"destino": str(destino)}

@@ -18,6 +18,7 @@ rechaza y desde cuándo, y detecta las **cuentas coordinadas** que las empujan.
 python3.12 -m venv .venv && .venv/bin/pip install -r requirements.txt
 make practica    # pipeline sobre datos/practica y puntaje
 make final       # pipeline sobre datos/final → entrega/
+make verificar   # re-corre el final desde cero y compara con las huellas SHA256 de costo.json
 ```
 
 Sin `make`:

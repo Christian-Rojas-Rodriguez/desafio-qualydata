@@ -10,7 +10,7 @@ import platform
 import time
 from pathlib import Path
 
-from . import bronze, coordinacion, embeddings, entrega, llm, narrativas, silver, supuestos
+from . import bronze, coordinacion, embeddings, entrega, huella, llm, narrativas, silver, supuestos
 from .lago import Lago
 
 ETAPAS = ["bronze", "silver", "embeddings", "coordinacion", "narrativas", "supuestos", "entrega"]
@@ -62,7 +62,8 @@ def main():
             costo = {"comentarios_procesados": n, "segundos": segundos, "tokens_ia": tokens, "usd_ia": 0.0,
                      "usd_por_mil_comentarios": 0.0, "hardware": hardware(),
                      "almacenamiento": "DuckDB sobre Parquet, capas bronze/silver/gold",
-                     "notas": f"embeddings locales ({embeddings.MODELO}); {uso_llm}", "etapas_segundos": tiempos}
+                     "notas": f"embeddings locales ({embeddings.MODELO}); {uso_llm}", "etapas_segundos": tiempos,
+                     "codigo": huella.codigo(), "entradas_sha256": huella.entradas(args.datos)}
             print("entrega:", json.dumps(entrega.correr(lago, args.entrega, costo)))
         tiempos[etapa] = round(time.time() - t, 2)
         print(f"  {etapa} en {tiempos[etapa]} s")

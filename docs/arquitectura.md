@@ -51,6 +51,7 @@ la capa anterior desde Parquet y escribe la suya; se puede cortar con `--hasta <
 | `qd/llm.py` | narrativas | — | LLM local opcional (Qwen 7B vía MLX) |
 | `qd/supuestos.py` | supuestos | `silver/*`, `gold/*` | `gold/supuestos` (avisa si algo del EDA no se cumple) |
 | `qd/entrega.py` | entrega | `gold/*` | `entrega/*.csv` |
+| `qd/huella.py` | entrega / verificación | datos y `entrega/` | SHA256 de entradas y salidas y commit en `costo.json`; `make verificar` re-corre y compara |
 | `qd/secretos.py` | — | — | claves desde entorno, `.env` o Kaggle Secrets |
 | `qd/validacion.py` | validación | `datos/practica` + verdad | `salida/validacion/*` |
 | `qd/diccionario.py` | documentación | lago | `docs/datos.md` |

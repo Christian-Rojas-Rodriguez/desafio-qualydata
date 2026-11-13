@@ -1,7 +1,7 @@
 PY ?= .venv/bin/python
 export QD_LLM ?= mlx
 
-.PHONY: practica final puntuar validar eda docs test
+.PHONY: practica final verificar puntuar validar eda docs test
 
 practica:  ## pipeline sobre la práctica y puntaje
 	$(PY) -m qd --datos datos/practica --entrega salida/practica
@@ -9,6 +9,9 @@ practica:  ## pipeline sobre la práctica y puntaje
 
 final:  ## pipeline sobre el set final -> entrega/
 	$(PY) -m qd --datos datos/final --entrega entrega
+
+verificar:  ## re-corre el final desde cero en otra carpeta y compara las huellas SHA256 de costo.json
+	$(PY) -m qd.huella --datos datos/final --entrega entrega
 
 puntuar:
 	$(PY) evaluacion/puntuar.py --verdad datos/practica/verdad --entrega salida/practica
