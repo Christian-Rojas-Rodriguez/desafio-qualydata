@@ -10,10 +10,10 @@ import platform
 import time
 from pathlib import Path
 
-from . import bronze, coordinacion, embeddings, entrega, llm, narrativas, silver
+from . import bronze, coordinacion, embeddings, entrega, llm, narrativas, silver, supuestos
 from .lago import Lago
 
-ETAPAS = ["bronze", "silver", "embeddings", "coordinacion", "narrativas", "entrega"]
+ETAPAS = ["bronze", "silver", "embeddings", "coordinacion", "narrativas", "supuestos", "entrega"]
 
 
 def hardware() -> str:
@@ -49,6 +49,8 @@ def main():
             print("coordinacion:", json.dumps(coordinacion.correr(lago)))
         elif etapa == "narrativas":
             print("narrativas:", json.dumps(narrativas.correr(lago)))
+        elif etapa == "supuestos":
+            print("supuestos:", json.dumps(supuestos.correr(lago), ensure_ascii=False))
         elif etapa == "entrega":
             con = lago.conectar()
             n = con.execute(f"SELECT count(*) FROM {lago.leer('silver', 'comentarios')}").fetchall()[0][0]

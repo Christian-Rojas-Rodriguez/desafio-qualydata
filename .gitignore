@@ -18,5 +18,6 @@ kaggle.json
 access_token
 *.pem
 
-# Validación: los subconjuntos se regeneran; solo se versiona el resumen
-salida/validacion/*/*/
+
+# Intermedios de experimentos
+experimentos/cache/
