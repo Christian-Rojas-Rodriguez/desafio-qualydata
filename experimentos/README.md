@@ -19,5 +19,6 @@ intermedios pesados van a `experimentos/cache/` (ignorado por git).
 | `10_expansion_por_respuestas.py` | ¿Cómo rescatar C2 (cuentas viejas, textos variados)? | Sincronía con el grupo + respuestas entre sí. | expansión |
 | `11_evaluar_coordinacion.py` | Barrido de parámetros de coordinación | Umbral global log10(cuentas·grupos) sin falsos positivos. | `PARAMS` de coordinación |
 | `12_reglas_de_origen_cv.py` | ¿Qué regla de origen generaliza? (elige con train, mira test) | Sin textos genéricos y racha ∝ tamaño: train 0.81 → 0.95, test 0.49 → 0.82. | `narrativas.origen` |
+| `13_coordinacion_cv.py` | ¿Qué cuentas genuinas marca coordinación y por qué? (elige con train) | Todas en núcleos falsos: cadenas de pares con k=2. Exigir 2-core: train genuinas 7 → 3, test 52 → 7. | `grado_nucleo` |
 
 Los scripts 01–11 se escribieron antes de separar train y test: miran toda la práctica.

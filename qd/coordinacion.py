@@ -9,6 +9,9 @@ mismas cuentas coinciden una y otra vez, más de lo esperable por azar.
    comentan a menos de W) contra las esperadas por su actividad y la densidad en que
    comentan. Sorpresa = -log10 P(Poisson >= observado).
 3. Núcleos: componentes del grafo de pares muy sorprendentes (umbral tipo Bonferroni).
+   Con miles de pares, el azar arma cadenas sueltas (A-B, B-C, C-D) de cuentas genuinas;
+   una campaña es densa. Un componente es núcleo si al menos `tamano_minimo` de sus
+   cuentas tienen `grado_nucleo` pares fuertes dentro de él (el 2-core del grafo).
 4. Expansión: una cuenta se suma a un núcleo si comenta junto al grupo, o le responde,
    mucho más de lo esperable. Se repite hasta que no entra nadie.
 """
@@ -28,6 +31,7 @@ PARAMS = {
     "ventana_s": 1800,
     "margen_par": -2.0,
     "tamano_minimo": 4,
+    "grado_nucleo": 2,
     "margen_union": 0.0,
     "rondas_expansion": 3,
 }
@@ -108,16 +112,16 @@ def sincronia_con_grupo(con, miembros: set, n_total: int, W: int):
     return df
 
 
-def correr(lago: Lago, p: dict = None) -> dict:
-    p = {**PARAMS, **(p or {})}
-    con = lago.conectar()
+def detectar(con, lago: Lago, p: dict):
+    """Núcleos y expansión. Devuelve (grupos, nucleos, pares fuertes, resumen)."""
     df, n_total = pares(con, lago, p)
 
     umbral_par = math.log10(max(len(df), 10)) + p["margen_par"]
     fuertes = df[df["sorpresa"] >= umbral_par]
     g = ig.Graph.TupleList(fuertes[["a", "b"]].itertuples(index=False), directed=False)
+    densas = [c >= p["grado_nucleo"] for c in g.coreness()]
     nucleos = sorted((sorted(g.vs[i]["name"] for i in comp) for comp in g.connected_components()
-                      if len(comp) >= p["tamano_minimo"]), key=lambda c: (-len(c), c[0]))
+                      if sum(densas[i] for i in comp) >= p["tamano_minimo"]), key=lambda c: (-len(c), c[0]))
     grupos = [set(c) for c in nucleos]
 
     # Cada cuenta activa se pone a prueba contra cada grupo.
@@ -136,6 +140,16 @@ def correr(lago: Lago, p: dict = None) -> dict:
         for cuenta, (i, _) in candidatos.items():
             grupos[i].add(cuenta)
 
+    resumen = {"pares_evaluados": len(df), "umbral_par": round(umbral_par, 2), "umbral_union": round(umbral_union, 2),
+               "pares_fuertes": len(fuertes), "grupos": len(grupos),
+               "cuentas": sum(len(m) for m in grupos), "tamanos": [len(m) for m in grupos]}
+    return grupos, nucleos, fuertes, resumen
+
+
+def correr(lago: Lago, p: dict = None) -> dict:
+    p = {**PARAMS, **(p or {})}
+    con = lago.conectar()
+    grupos, nucleos, fuertes, resumen = detectar(con, lago, p)
     filas = [{"cuenta_id": c, "grupo": f"g{i + 1:02d}", "nucleo": c in nucleos[i]}
              for i, miembros in enumerate(grupos) for c in sorted(miembros)]
     tabla = pa.Table.from_pylist(filas, schema=pa.schema([("cuenta_id", pa.string()), ("grupo", pa.string()),
@@ -145,5 +159,4 @@ def correr(lago: Lago, p: dict = None) -> dict:
     con.register("t_pares", pa.Table.from_pandas(fuertes, preserve_index=False))
     lago.escribir(con, "gold", "pares_coordinados", "SELECT * FROM t_pares ORDER BY sorpresa DESC")
     con.close()
-    return {"pares_evaluados": len(df), "umbral_par": round(umbral_par, 2), "umbral_union": round(umbral_union, 2), "pares_fuertes": len(fuertes), "grupos": len(grupos),
-            "cuentas": sum(len(m) for m in grupos), "tamanos": [len(m) for m in grupos]}
+    return resumen

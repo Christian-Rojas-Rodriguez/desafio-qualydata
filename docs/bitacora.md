@@ -18,8 +18,10 @@ separar train y test); desde entonces, ver [validacion.md](validacion.md).
 | 12/11 | Validación cruzada sin fugas (`qd/validacion.py`) | folds | ver validacion.md | queda |
 | 12/11 | Origen: sin textos genéricos y racha ∝ tamaño (5 → max(5, 0,5%·n)) | origen en train / test | 0.81 → 0.95 / 0.49 → 0.82 | queda; práctica completa sigue en 53.25 |
 | 12/11 | EDA documentado (`notebooks/01_eda_practica.ipynb`) y etapa `supuestos` que verifica en cada corrida lo que el EDA dio por cierto | práctica | 10/10 chequeos ok | queda; el viernes avisa si el final rompe alguno |
+| 12/11 | Coordinación: núcleo solo si su 2-core tiene ≥ 4 cuentas (las cadenas sueltas de genuinas no cuentan) | coord. en train / test | genuinas 7 → 3, 23.59 → 23.65 / genuinas 52 → 7, 14.14 → 14.16 | queda; práctica completa sigue en 53.25 |
 
 ## Pendientes conocidos
 
 - B3 y H3 con postura invertida (< 0,6 puntos en práctica).
-- Coordinación marca cuentas genuinas cuando hay pocos datos o ninguna campaña.
+- C2 (cuentas viejas, textos variados) pierde 2–9 de 30 cuentas en train y casi desaparece
+  con el 20% de los datos.

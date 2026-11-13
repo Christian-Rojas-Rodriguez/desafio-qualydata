@@ -39,5 +39,12 @@ Lectura:
 - **El agrupamiento generaliza**: 0.98–1.0 en todo, y encuentra la cantidad exacta de
   narrativas en temas ocultos.
 - **Origen de emergentes**: fallaba con menos datos; corregido (ver bitácora).
-- **Coordinación con pocos datos o sin campaña**: baja el recall y aparecen cuentas genuinas
-  marcadas (6 en colectivo, 9 en litio, 35 en un fold de 20%). Pendiente.
+- **Coordinación con pocos datos o sin campaña**: aparecían cuentas genuinas marcadas (6 en
+  colectivo, 9 en litio, 35 en un fold de 20%), todas en núcleos falsos: cadenas de 4–6
+  cuentas unidas por pares que coinciden solo 2 veces. Corregido exigiendo núcleos densos
+  (2-core), elegido con train: genuinas 7 → 3, puntos 23.59 → 23.65; en test genuinas
+  52 → 7 y ningún grupo falso (`experimentos/13_coordinacion_cv.py`).
+- **El recall de test sigue bajo (0.3–0.6)** y es falta de datos, no del método: en el 20%
+  muchas cuentas de campaña tienen un solo comentario, y C2 (cuentas viejas repartidas en
+  muchas publicaciones) casi no coincide. En train (160k comentarios, tamaño parecido al
+  final) C1 y C3 salen casi completas; a C2 le faltan 2–9 cuentas de 30.

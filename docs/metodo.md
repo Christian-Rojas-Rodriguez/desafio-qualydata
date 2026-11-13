@@ -42,7 +42,9 @@ Explicado sin código. Los parámetros están en `PARAMS` al principio de cada m
 2. **Pares**: para cada par de cuentas, en cuántas publicaciones coincidieron frente a cuántas
    se esperaría por azar dada su actividad. Sorpresa = -log10 P(Poisson ≥ observado).
 3. **Núcleos**: componentes de pares muy sorprendentes (umbral tipo Bonferroni: se ajusta solo
-   a la cantidad de pares probados), con al menos 4 cuentas.
+   a la cantidad de pares probados). Un componente cuenta como núcleo solo si al menos 4 de
+   sus cuentas tienen 2 o más pares fuertes dentro de él: con miles de pares, el azar arma
+   cadenas sueltas de cuentas genuinas (A-B, B-C, C-D); una campaña es densa.
 4. **Expansión**: una cuenta se suma a un grupo si comenta junto al grupo, o le responde, mucho
    más de lo esperable. Rescata campañas de cuentas viejas con textos variados.
 
