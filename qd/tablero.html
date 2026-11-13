@@ -95,6 +95,25 @@ code { font: 13.5px var(--mono); background: rgba(0, 0, 0, 0.05); padding: 1px 5
 .notas { font-size: 12.5px; line-height: 1.6; color: var(--tinta-2); border-top: 1px solid var(--linea); margin-top: 56px; padding-top: 16px; }
 #tip { position: fixed; pointer-events: none; background: var(--pizarra); color: #fff; font-size: 12px; line-height: 1.45;
        padding: 7px 10px; border-radius: 3px; opacity: 0; transition: opacity .08s; max-width: 280px; z-index: 9; }
+/* Animaciones al entrar en pantalla. Solo si el sistema no pide reducir movimiento (clase .anim en <html>). */
+#progreso { position: fixed; top: 0; left: 0; height: 3px; width: 100%; background: var(--apoya); transform-origin: left;
+            transform: scaleX(0); z-index: 10; }
+.anim .revela { opacity: 0; transform: translateY(22px); transition: opacity .8s ease, transform .8s cubic-bezier(.2, .7, .2, 1); }
+.anim .revela.visible { opacity: 1; transform: none; }
+.anim .crece { transform: scaleX(0); transform-box: fill-box; transform-origin: left center;
+               transition: transform 1s cubic-bezier(.2, .7, .2, 1); }
+.anim .visible .crece { transform: none; }
+.anim .aparece { opacity: 0; transition: opacity .5s ease; }
+.anim .visible .aparece { opacity: 1; }
+.traza { fill-opacity: var(--fo); }
+.anim .traza { stroke-dasharray: 1; stroke-dashoffset: 1; fill-opacity: 0;
+               transition: stroke-dashoffset 1.6s ease-in-out, fill-opacity .7s ease; }
+.anim .visible .traza { stroke-dashoffset: 0; fill-opacity: var(--fo); }
+.anim .punto { opacity: 0; transition: opacity .3s ease; }
+.anim .visible .punto { opacity: 1; }
+.repetir { font: 12.5px var(--sans); color: var(--tinta-2); background: none; border: 1px solid var(--eje); border-radius: 3px;
+           padding: 4px 10px; cursor: pointer; margin-top: 12px; }
+.repetir:hover { color: var(--tinta); border-color: var(--tinta-2); }
 @media (max-width: 860px) {
   .cuerpo { grid-template-columns: minmax(0, 1fr); }
   .cuerpo > aside { grid-column: 1; border-left: 2px solid var(--linea); padding: 0 0 0 12px; }
@@ -105,6 +124,7 @@ code { font: 13.5px var(--mono); background: rgba(0, 0, 0, 0.05); padding: 1px 5
 </style>
 </head>
 <body>
+<div id="progreso"></div>
 <div class="barra-sup"><div><span><b>QualyData</b> · narrativas y coordinación</span><span>Hackathon Argentina Space 2026 · set final</span></div></div>
 <main>
   <header class="cuerpo">
@@ -166,6 +186,7 @@ code { font: 13.5px var(--mono); background: rgba(0, 0, 0, 0.05); padding: 1px 5
   <section class="banda"><div class="ancho"><figure>
     <div id="fig-grafo"></div>
     <figcaption id="cap-grafo"></figcaption>
+    <button class="repetir" id="repetir-grafo" type="button">↻ Repetir la animación</button>
   </figure></div></section>
 
   <section class="cuerpo">
@@ -192,6 +213,8 @@ code { font: 13.5px var(--mono); background: rgba(0, 0, 0, 0.05); padding: 1px 5
 <div id="tip"></div>
 <script>
 const D = /*DATOS*/null;
+const ANIMAR = !matchMedia("(prefers-reduced-motion: reduce)").matches && "IntersectionObserver" in window;
+if (ANIMAR) document.documentElement.classList.add("anim");
 const NS = "http://www.w3.org/2000/svg";
 const fmt = n => Math.round(n).toLocaleString("es-AR");
 const pct = x => Math.round(100 * x) + "%";
@@ -246,9 +269,11 @@ D.temas.forEach((t, i) => {
       <div class="frases">${n.frases.slice(0, 5).join(" · ")}</div></div><div class="barra"></div>`;
     const W = 300, w = Math.max(40, 230 * n.n / maxN), a = w * n.apoya / n.n;
     const svg = el("svg", {width: W, height: 18, viewBox: `0 0 ${W} 18`});
-    el("rect", {x: 0, y: 3, width: Math.max(a - 1, 0), height: 12, rx: 2, fill: "var(--apoya)"}, svg);
-    el("rect", {x: a + 1, y: 3, width: Math.max(w - a - 1, 0), height: 12, rx: 2, fill: "var(--rechaza)"}, svg);
-    el("text", {x: w + 8, y: 13}, svg).textContent = fmt(n.n);
+    const orden1 = figQue.querySelectorAll(".fila").length + caja.querySelectorAll(".fila").length;
+    const barra = el("g", {class: "crece", style: `transition-delay:${orden1 * 70}ms`}, svg);
+    el("rect", {x: 0, y: 3, width: Math.max(a - 1, 0), height: 12, rx: 2, fill: "var(--apoya)"}, barra);
+    el("rect", {x: a + 1, y: 3, width: Math.max(w - a - 1, 0), height: 12, rx: 2, fill: "var(--rechaza)"}, barra);
+    el("text", {x: w + 8, y: 13, class: "aparece", style: `transition-delay:${orden1 * 70 + 600}ms`}, svg).textContent = fmt(n.n);
     const hit = el("rect", {x: 0, y: 0, width: W, height: 18, fill: "transparent"}, svg);
     hit.addEventListener("mousemove", e => mostrar(e, `<b>${n.id}</b> · ${fmt(n.n)} comentarios<br>apoya ${fmt(n.apoya)} (${pct(n.apoya / n.n)})
       · rechaza ${fmt(n.rechaza)} (${pct(n.rechaza / n.n)})<br>qué lado afirma: ${METODO[n.metodo] || n.metodo}`));
@@ -287,11 +312,13 @@ set("cap-cuando", `<span class="etiqueta-fig">Figura 2.</span> Comentarios por n
     let d = `M${x(D.inicio)},${base}`;
     total.forEach((v, k) => { d += `L${x(D.inicio + (k + .5) * pasoS)},${y(v)}`; });
     d += `L${x(D.inicio + nb * pasoS)},${base}Z`;
-    el("path", {d, fill: color, "fill-opacity": n.emergente ? .16 : .1, stroke: color, "stroke-width": 1.5, "stroke-linejoin": "round"}, gr);
+    el("path", {d, fill: color, class: "traza", pathLength: 1, stroke: color, "stroke-width": 1.5, "stroke-linejoin": "round",
+                style: `--fo:${n.emergente ? .16 : .1};transition-delay:${i * 90}ms,${i * 90 + 1200}ms`}, gr);
     el("line", {x1: izq, x2: W - der, y1: base, y2: base, stroke: "var(--eje)", "stroke-width": 1}, gr);
     const xo = x(n.origen);
-    el("line", {x1: xo, x2: xo, y1: base - alto + 8, y2: base, stroke: "var(--tinta)", "stroke-width": 1.5}, gr);
-    el("circle", {cx: xo, cy: base, r: 3, fill: "var(--tinta)"}, gr);
+    const marca = el("g", {class: "aparece", style: `transition-delay:${1500 + i * 90}ms`}, gr);
+    el("line", {x1: xo, x2: xo, y1: base - alto + 8, y2: base, stroke: "var(--tinta)", "stroke-width": 1.5}, marca);
+    el("circle", {cx: xo, cy: base, r: 3, fill: "var(--tinta)"}, marca);
     const t = el("text", {x: 0, y: base - 4, fill: n.emergente ? "var(--tinta)" : "var(--tinta-2)"}, gr);
     const corto = n.titulo.length > 38 ? n.titulo.slice(0, 37).trim() + "…" : n.titulo;
     t.textContent = `${n.id}  ${corto}`;
@@ -316,7 +343,7 @@ set("txt-quien", `Tres grupos de cuentas comentan juntos en las mismas publicaci
 const figQuien = document.getElementById("fig-quien");
 D.grupos.forEach(g => {
   const n = N[g.narrativa];
-  const bloque = document.createElement("div"); bloque.className = "operacion";
+  const bloque = document.createElement("div"); bloque.className = "operacion revela";
   bloque.innerHTML = `<h3><span class="id">${g.id}</span>Empuja ${ref(n)}</h3>
     <div class="datos-op"><span><b>${g.cuentas}</b> cuentas · <b>${fmt(g.comentarios)}</b> comentarios</span>
     <span><b>${pct(g.apoya)}</b> de los suyos en ${n.id} la apoyan</span>
@@ -336,7 +363,8 @@ D.grupos.forEach(g => {
     }
     const xo = x(n.origen);
     el("line", {x1: xo, x2: xo, y1: 0, y2: H - 20, stroke: "var(--apoya)", "stroke-width": 1.5}, svg);
-    filas.forEach((ts, i) => ts.forEach(s => el("circle", {cx: x(s), cy: i * fila + 3, r: 1.7, fill: color}, svg)));
+    filas.forEach((ts, i) => ts.forEach(s => el("circle", {cx: x(s), cy: i * fila + 3, r: 1.7, fill: color, class: "punto",
+      style: `transition-delay:${Math.round(2200 * (s - D.inicio) / (D.fin - D.inicio))}ms`}, svg)));
   });
 });
 
@@ -350,26 +378,77 @@ D.grupos.forEach(g => {
   set("cap-grafo", `<span class="etiqueta-fig">Figura 4.</span> Cada nodo es una cuenta y cada línea, un par que coincide mucho más de lo
     esperable; el grosor crece con la cantidad de coincidencias. Nodo lleno: núcleo de la operación. Nodo vacío: cuenta sumada
     después, por comentar en sincronía con el grupo. En gris, abajo, los pares que no llegan a formar un núcleo denso.`);
+  const capaAristas = el("g", {}, svg), capaNodos = el("g", {}, svg), rotulos = [];
+  const todos = [], lineas = [];
   const dibujar = (nodos, aristas, color, lleno) => {
-    aristas.forEach(([i, j, k]) => el("line", {x1: nodos[i].x, y1: nodos[i].y, x2: nodos[j].x, y2: nodos[j].y,
-      stroke: color, "stroke-opacity": .28, "stroke-width": Math.min(.6 + .35 * k, 3)}, svg));
+    aristas.forEach(([i, j, k]) => lineas.push({a: nodos[i], b: nodos[j], el: el("line", {x1: nodos[i].x, y1: nodos[i].y,
+      x2: nodos[j].x, y2: nodos[j].y, stroke: color, "stroke-opacity": .28, "stroke-width": Math.min(.6 + .35 * k, 3)}, capaAristas)}));
     nodos.forEach(q => {
-      const c = el("circle", {cx: q.x, cy: q.y, r: 4.2, fill: lleno(q) ? color : "var(--banda)", stroke: color, "stroke-width": 1.5}, svg);
+      const c = el("circle", {cx: q.x, cy: q.y, r: 4.2, fill: lleno(q) ? color : "var(--banda)", stroke: color, "stroke-width": 1.5}, capaNodos);
+      todos.push({q, el: c});
       c.addEventListener("mousemove", e => mostrar(e, `<b>${q.id}</b><br>${fmt(q.n)} comentarios` + (q.edad == null ? "" : `<br>cuenta de ${anios(q.edad)}`)));
       c.addEventListener("mouseleave", ocultar);
     });
   };
   G.cajas.forEach(c => {
     const g = D.grupos.find(x => x.id === c.grupo);
-    el("text", {x: c.x, y: 12, "font-weight": 600, fill: "var(--tinta)"}, svg).textContent =
+    rotulos.push(el("text", {x: c.x, y: 12, "font-weight": 600, fill: "var(--tinta)"}, svg));
+    rotulos[rotulos.length - 1].textContent =
       `${c.grupo} · ${c.nodos.length} cuentas · ${c.aristas.length} pares`;
     dibujar(c.nodos, c.aristas, "var(--pizarra)", q => q.nucleo);
   });
   el("line", {x1: 0, x2: G.ancho, y1: G.corte + 6, y2: G.corte + 6, stroke: "var(--linea)"}, svg);
-  el("text", {x: 0, y: G.corte + 24, "font-weight": 600, fill: "var(--tinta-2)"}, svg).textContent =
+  rotulos.push(el("text", {x: 0, y: G.corte + 24, "font-weight": 600, fill: "var(--tinta-2)"}, svg));
+  rotulos[rotulos.length - 1].textContent =
     `No marcadas · ${G.sueltos.nodos.length} cuentas · ${G.sueltos.aristas.length} pares en ${G.sueltos.componentes} grupos sueltos (el mayor, de ${G.sueltos.mayor} cuentas)`;
   dibujar(G.sueltos.nodos, G.sueltos.aristas, "rgba(0,0,0,0.38)", () => true);
+
+  // Animación: cada cuenta arranca en un lugar al azar (semilla fija) y viaja a su isla;
+  // las líneas aparecen cuando los nodos ya están cerca.
+  let semilla = 7;
+  const azar = () => { semilla = (semilla * 1664525 + 1013904223) % 4294967296; return semilla / 4294967296; };
+  todos.forEach(t => { t.x0 = 10 + azar() * (G.ancho - 20); t.y0 = 10 + azar() * (G.alto - 20); });
+  const suave = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+  let cuadro = null;
+  function pintar(t) {
+    const e = suave(Math.min(Math.max(t, 0), 1));
+    todos.forEach(n => { n.cx = n.x0 + (n.q.x - n.x0) * e; n.cy = n.y0 + (n.q.y - n.y0) * e;
+      n.el.setAttribute("cx", n.cx); n.el.setAttribute("cy", n.cy); n.q._cx = n.cx; n.q._cy = n.cy; });
+    const op = Math.min(Math.max((t - .55) / .45, 0), 1);
+    lineas.forEach(l => { l.el.setAttribute("x1", l.a._cx); l.el.setAttribute("y1", l.a._cy);
+      l.el.setAttribute("x2", l.b._cx); l.el.setAttribute("y2", l.b._cy); });
+    capaAristas.setAttribute("opacity", op);
+    rotulos.forEach(r => r.setAttribute("opacity", op));
+  }
+  function animar() {
+    if (!ANIMAR) return;
+    cancelAnimationFrame(cuadro);
+    const inicio = performance.now(), dur = 2600;
+    const paso = ahora => { const t = (ahora - inicio) / dur; pintar(t); if (t < 1) cuadro = requestAnimationFrame(paso); };
+    cuadro = requestAnimationFrame(paso);
+  }
+  if (ANIMAR) pintar(0);
+  document.getElementById("fig-grafo").addEventListener("visible", animar);
+  document.getElementById("repetir-grafo").addEventListener("click", animar);
+  if (!ANIMAR) document.getElementById("repetir-grafo").remove();
 })();
+
+// --- scroll: progreso de lectura y figuras que se revelan al entrar en pantalla ---------
+const progreso = document.getElementById("progreso");
+addEventListener("scroll", () => {
+  const max = document.documentElement.scrollHeight - innerHeight;
+  progreso.style.transform = `scaleX(${max > 0 ? scrollY / max : 0})`;
+}, {passive: true});
+document.querySelectorAll(".cifras, h2, #fig-que, #fig-cuando, #fig-grafo").forEach(x => x.classList.add("revela"));
+if (ANIMAR) {
+  const obs = new IntersectionObserver(entradas => entradas.forEach(e => {
+    if (!e.isIntersecting) return;
+    e.target.classList.add("visible");
+    e.target.dispatchEvent(new Event("visible"));
+    obs.unobserve(e.target);
+  }), {threshold: .18});
+  document.querySelectorAll(".revela").forEach(x => obs.observe(x));
+}
 
 set("notas", `Generado con <code>python -m qd.tablero</code> a partir de las capas gold del set final. La entrega se
   reproduce byte a byte con <code>make verificar</code>; procesar el set tomó ${fmt(D.costo.segundos)} s en ${D.costo.hardware || "una notebook"},
