@@ -1,0 +1,18 @@
+{
+  "comentarios_procesados": 150000,
+  "segundos": 100.2,
+  "tokens_ia": 12052,
+  "usd_ia": 0.0,
+  "usd_por_mil_comentarios": 0.0,
+  "hardware": "arm64 Darwin, 10 núcleos, 16 GB RAM, aceleración mps",
+  "almacenamiento": "DuckDB sobre Parquet, capas bronze/silver/gold",
+  "notas": "embeddings locales (intfloat/multilingual-e5-small); LLM local mlx-community/Qwen2.5-7B-Instruct-4bit (24 llamadas, solo para elegir el lado que afirma y titular cada narrativa)",
+  "etapas_segundos": {
+    "bronze": 0.23,
+    "silver": 3.29,
+    "embeddings": 38.08,
+    "coordinacion": 1.71,
+    "narrativas": 56.79,
+    "supuestos": 0.04
+  }
+}
