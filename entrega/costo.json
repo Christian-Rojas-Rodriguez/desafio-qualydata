@@ -1,6 +1,6 @@
 {
   "comentarios_procesados": 150000,
-  "segundos": 98.3,
+  "segundos": 102.8,
   "tokens_ia": 12052,
   "usd_ia": 0.0,
   "usd_por_mil_comentarios": 0.0,
@@ -8,11 +8,23 @@
   "almacenamiento": "DuckDB sobre Parquet, capas bronze/silver/gold",
   "notas": "embeddings locales (intfloat/multilingual-e5-small); LLM local mlx-community/Qwen2.5-7B-Instruct-4bit (24 llamadas, solo para elegir el lado que afirma y titular cada narrativa)",
   "etapas_segundos": {
-    "bronze": 0.25,
-    "silver": 3.36,
-    "embeddings": 38.36,
-    "coordinacion": 1.67,
-    "narrativas": 54.58,
-    "supuestos": 0.04
+    "bronze": 0.23,
+    "silver": 3.35,
+    "embeddings": 40.07,
+    "coordinacion": 2.01,
+    "narrativas": 57.11,
+    "supuestos": 0.03
+  },
+  "codigo": "faac5fc",
+  "entradas_sha256": {
+    "comentarios.csv.gz": "99b4c5b1fc3f07fd04c3cee924a5cc5e901541b31b984162c5f04d52099e49df",
+    "cuentas.csv.gz": "43a325bdb0b92fd06e8632d764bc69f32216805795a069c1abbda78556cd087a",
+    "fuentes.csv": "7695e3f826c9e855a4d0b7592698b3f8af7edcfccf1cb9814cfbcc6e2f1c34c7",
+    "publicaciones.csv.gz": "74b02ddf5cdb0ebbafed897bb69e6ae9d980355b6ccccf3fccfc441a641d7f02"
+  },
+  "salidas_sha256": {
+    "comentarios.csv": "e5c9997203769a393af967ae9d2d3061e269fb422d8504e7adde4e11450bbdc6",
+    "narrativas.csv": "f344b3e3ba4c4f1fbcc39010d0ff55e4caeefbae43df78ad7eaf27158d8a376c",
+    "cuentas.csv": "5a65d98539ac00d60614bdc811cf13e0c17f62b874b888322970d23d3621ce62"
   }
 }

@@ -9,7 +9,7 @@ rechaza y desde cuándo, y detecta las **cuentas coordinadas** que las empujan.
 - **53.25 / 55** en la parte automática del set de práctica; **51.9 ± 0.6** en validación
   cruzada corriendo desde cero sobre el 80% de los datos, y **53.36** entrenando con los
   primeros 12 días ([docs/validacion.md](docs/validacion.md)).
-- **Set final** (`entrega/`): 150.000 comentarios en 98 s desde cero, 12 narrativas,
+- **Set final** (`entrega/`): 150.000 comentarios en ~100 s desde cero (se reproduce byte a byte con `make verificar`), 12 narrativas,
   17,8% de ruido, 3 operaciones coordinadas con 94 cuentas, 10/10 supuestos del EDA verificados.
 
 ## Cómo correr
@@ -51,6 +51,7 @@ entrega/       resultado sobre el set final
 | Cómo fluyen los datos y qué hace cada módulo | [docs/arquitectura.md](docs/arquitectura.md) |
 | Qué tabla y columna hay en cada capa | [docs/datos.md](docs/datos.md) |
 | Cómo se detectan narrativas, postura y coordinación | [docs/metodo.md](docs/metodo.md) |
+| Qué se valida en los datos y cómo se reproduce la entrega | [docs/contrato.md](docs/contrato.md) |
 | Cuánto generaliza y cómo lo medimos | [docs/validacion.md](docs/validacion.md) |
 | Por qué cada decisión | [docs/bitacora.md](docs/bitacora.md) |
 
