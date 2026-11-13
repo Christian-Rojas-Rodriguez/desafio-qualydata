@@ -4,89 +4,110 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Qué circula, desde cuándo y quién lo empuja</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root {
-  --papel: #fbfaf7;
-  --tinta: #141414;
-  --tinta-2: #52514e;
-  --tenue: #898781;
-  --linea: #e1e0d9;
-  --eje: #c3c2b7;
+  --papel: #ffffff;
+  --banda: #f7f7f7;
+  --tinta: rgba(0, 0, 0, 0.84);
+  --tinta-2: rgba(0, 0, 0, 0.6);
+  --tenue: rgba(0, 0, 0, 0.45);
+  --linea: rgba(0, 0, 0, 0.1);
+  --eje: rgba(0, 0, 0, 0.22);
+  --pizarra: hsl(200, 60%, 15%);
   --apoya: #2a78d6;
   --rechaza: #eb6834;
   --control: #b9b7af;
-  --serif: "Source Serif 4", Georgia, "Times New Roman", serif;
-  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 * { box-sizing: border-box; }
 html { background: var(--papel); }
-body { margin: 0; background: var(--papel); color: var(--tinta); font: 18px/1.6 var(--serif);
-       font-optical-sizing: auto; -webkit-font-smoothing: antialiased; }
-main { padding: 72px 16px 96px; }
-.cuerpo { max-width: 680px; margin: 0 auto; }
-.ancho { max-width: 1000px; margin: 0 auto; }
-.antetitulo { font: 500 12px/1.4 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--tenue); }
-h1 { font-size: clamp(34px, 5.4vw, 54px); line-height: 1.06; letter-spacing: -.015em; font-weight: 700; margin: 14px 0 18px; }
-.bajada { font-size: 21px; line-height: 1.5; color: var(--tinta-2); margin: 0 0 28px; }
-.firma { font: 13px/1.6 var(--mono); color: var(--tenue); border-top: 1px solid var(--linea);
-         border-bottom: 1px solid var(--linea); padding: 10px 0; display: flex; flex-wrap: wrap; gap: 4px 28px; }
-.firma b { color: var(--tinta); font-weight: 500; }
-h2 { font-size: 28px; line-height: 1.2; margin: 72px 0 10px; letter-spacing: -.01em; }
-h2 .num { font: 500 14px var(--mono); color: var(--tenue); margin-right: 10px; vertical-align: 4px; }
+body { margin: 0; background: var(--papel); color: var(--tinta); font: 400 17px/1.7 var(--sans);
+       -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+.barra-sup { background: var(--pizarra); color: rgba(255, 255, 255, 0.85); font-size: 14px; line-height: 1; }
+.barra-sup div { max-width: 1016px; margin: 0 auto; padding: 19px 16px; display: flex; justify-content: space-between; gap: 16px; }
+.barra-sup b { color: #fff; font-weight: 600; letter-spacing: .01em; }
+main { padding: 0 0 96px; }
+/* Grilla de Distill: columna de texto a la izquierda y margen derecho para notas. */
+.cuerpo { max-width: 1016px; margin: 0 auto; padding: 0 16px; display: grid;
+          grid-template-columns: minmax(0, 648px) minmax(0, 1fr); column-gap: 48px; grid-auto-flow: row dense; }
+.cuerpo > * { grid-column: 1; }
+.cuerpo > aside { grid-column: 2; font-size: 12.5px; line-height: 1.55; color: var(--tinta-2); align-self: start;
+                  padding-top: 5px; margin-bottom: 18px; }
+.cuerpo > aside b { color: var(--tinta); font-weight: 600; }
+.ancho { max-width: 984px; margin: 0 auto; }
+header.cuerpo { padding-top: 56px; }
+h1 { grid-column: 1 / -1 !important; font-size: clamp(34px, 5vw, 50px); line-height: 1.1; font-weight: 700;
+     letter-spacing: -.015em; margin: 0 0 18px; color: #000; max-width: 820px; }
+.bajada { font-size: 22px; line-height: 1.45; color: var(--tinta-2); margin: 0 0 36px; font-weight: 300; }
+.firma { grid-column: 1 / -1 !important; border-top: 1px solid var(--linea); border-bottom: 1px solid var(--linea);
+         padding: 20px 0 22px; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px 24px;
+         font-size: 13.5px; line-height: 1.5; }
+.firma h3 { font-size: 10.5px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--tenue); margin: 0 0 4px; }
+.firma p { margin: 0; color: var(--tinta); }
+h2 { grid-column: 1 / -1 !important; max-width: 648px; font-size: 24px; line-height: 1.25; font-weight: 600; color: #000; margin: 56px 0 24px; padding-bottom: 14px;
+     border-bottom: 1px solid var(--linea); }
+h2 .num { display: none; }
 p { margin: 0 0 18px; }
-.cifras { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 0; margin: 40px 0 8px;
-          border-top: 2px solid var(--tinta); }
-.cifra { padding: 16px 20px 18px 0; }
-.cifra .valor { font-size: 52px; line-height: 1; font-weight: 600; letter-spacing: -.02em; }
-.cifra .que { font-size: 16px; line-height: 1.35; color: var(--tinta-2); margin-top: 8px; }
-.pie-cifras { font: 12px/1.5 var(--mono); color: var(--tenue); }
-figure { margin: 28px 0 0; }
-figcaption { font-size: 15px; line-height: 1.5; color: var(--tinta-2); margin-top: 14px; max-width: 680px; }
-figcaption b { color: var(--tinta); }
-.etiqueta-fig { font: 500 12px var(--mono); color: var(--tinta); letter-spacing: .04em; text-transform: uppercase; margin-right: 6px; }
-.leyenda { display: flex; gap: 18px; font: 12px var(--mono); color: var(--tinta-2); margin: 0 0 10px; flex-wrap: wrap; }
+.cifras { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); margin: 44px 0 6px; }
+.cifra { padding: 0 20px 14px 0; }
+.cifra .valor { font-size: 56px; line-height: 1; font-weight: 700; letter-spacing: -.03em; color: #000; }
+.cifra .que { font-size: 14.5px; line-height: 1.4; color: var(--tinta-2); margin-top: 8px; }
+.pie-cifras { font-size: 12.5px; line-height: 1.5; color: var(--tenue); }
+/* Las figuras van en bandas de ancho completo, como en Distill. */
+.banda { background: var(--banda); border-top: 1px solid var(--linea); border-bottom: 1px solid var(--linea);
+         padding: 28px 16px 26px; margin: 14px 0 0; }
+figure { margin: 0; }
+figcaption { font-size: 12.5px; line-height: 1.55; color: var(--tinta-2); margin-top: 18px; max-width: 648px; }
+figcaption b { color: var(--tinta); font-weight: 600; }
+.etiqueta-fig { font-weight: 600; color: var(--tinta); margin-right: 4px; }
+.leyenda { display: flex; gap: 20px; font-size: 12.5px; color: var(--tinta-2); margin: 0 0 6px; flex-wrap: wrap; }
 .leyenda i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
-.tema { margin-top: 26px; }
-.tema-titulo { font: 500 12px var(--mono); text-transform: uppercase; letter-spacing: .06em; color: var(--tenue);
+.tema { margin-top: 20px; }
+.tema-titulo { font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--tenue);
                border-bottom: 1px solid var(--eje); padding-bottom: 6px; display: flex; justify-content: space-between; }
-.fila { display: grid; grid-template-columns: 38px minmax(0, 1fr) 300px; gap: 14px; align-items: center;
-        padding: 11px 0; border-bottom: 1px solid var(--linea); }
+.fila { display: grid; grid-template-columns: 34px minmax(0, 1fr) 300px; gap: 14px; align-items: center;
+        padding: 10px 0; border-bottom: 1px solid var(--linea); transition: opacity .15s; }
 .fila .id { font: 12px var(--mono); color: var(--tenue); }
-.fila .tit { font-size: 17px; line-height: 1.35; }
-.fila .frases { font: 11.5px/1.5 var(--mono); color: var(--tenue); margin-top: 3px; }
-.marca { font: 500 10.5px var(--mono); text-transform: uppercase; letter-spacing: .05em; color: var(--tinta);
-         border: 1px solid var(--tinta); border-radius: 3px; padding: 0 4px; margin-left: 6px; vertical-align: 2px; white-space: nowrap; }
+.fila .tit { font-size: 15.5px; line-height: 1.35; color: #000; }
+.fila .frases { font-size: 12px; line-height: 1.5; color: var(--tenue); margin-top: 2px; }
+.marca { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: #fff;
+         background: var(--pizarra); border-radius: 2px; padding: 2px 5px; margin-left: 7px; vertical-align: 2px; white-space: nowrap; }
 svg { display: block; overflow: visible; }
-svg text { font-family: var(--mono); font-size: 11px; fill: var(--tinta-2); }
-.operacion { margin-top: 40px; }
-.operacion h3 { font-size: 21px; line-height: 1.3; margin: 0 0 6px; font-weight: 600; }
-.operacion h3 .id { font: 500 13px var(--mono); color: var(--tenue); margin-right: 8px; }
-.datos-op { display: flex; flex-wrap: wrap; gap: 6px 28px; font: 12.5px/1.5 var(--mono); color: var(--tinta-2); margin-bottom: 10px; }
-.datos-op b { color: var(--tinta); font-weight: 500; }
-.par { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 28px; }
+svg text { font-family: var(--sans); font-size: 11px; fill: var(--tinta-2); }
 .fluido { width: 100%; height: auto; }
-.par .rotulo { font: 12px var(--mono); color: var(--tinta-2); margin-bottom: 4px; }
-ol.metodo { padding-left: 22px; }
+g.serie { transition: opacity .15s; }
+body.enfocando .fila:not(.foco), body.enfocando g.serie:not(.foco) { opacity: .18; }
+/* Referencias del texto a las figuras: al pasar el mouse se resalta la narrativa. */
+.ref { border-bottom: 1px dotted var(--tenue); cursor: default; }
+.ref:hover { background: hsla(200, 60%, 15%, 0.08); border-bottom-color: var(--pizarra); }
+.operacion { margin-top: 34px; }
+.operacion:first-child { margin-top: 0; }
+.operacion h3 { font-size: 17px; line-height: 1.35; margin: 0 0 4px; font-weight: 600; color: #000; }
+.operacion h3 .id { font: 12px var(--mono); color: var(--tenue); margin-right: 8px; font-weight: 400; }
+.datos-op { display: flex; flex-wrap: wrap; gap: 4px 26px; font-size: 12.5px; line-height: 1.5; color: var(--tinta-2); margin-bottom: 12px; }
+.datos-op b { color: var(--tinta); font-weight: 600; }
+.par { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 28px; }
+.par .rotulo { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--tenue); margin-bottom: 6px; }
+ol.metodo { padding-left: 22px; margin: 0 0 18px; }
 ol.metodo li { margin-bottom: 10px; }
-code { font: 14px var(--mono); background: #f0efec; padding: 1px 5px; border-radius: 3px; }
-.notas { font-size: 14px; color: var(--tinta-2); border-top: 1px solid var(--eje); margin-top: 64px; padding-top: 14px; }
-#tip { position: fixed; pointer-events: none; background: var(--tinta); color: var(--papel); font: 12px/1.45 var(--mono);
-       padding: 7px 9px; border-radius: 4px; opacity: 0; transition: opacity .08s; max-width: 280px; z-index: 9; }
-@media (max-width: 760px) {
-  body { font-size: 17px; }
+code { font: 13.5px var(--mono); background: rgba(0, 0, 0, 0.05); padding: 1px 5px; border-radius: 3px; }
+.notas { font-size: 12.5px; line-height: 1.6; color: var(--tinta-2); border-top: 1px solid var(--linea); margin-top: 56px; padding-top: 16px; }
+#tip { position: fixed; pointer-events: none; background: var(--pizarra); color: #fff; font-size: 12px; line-height: 1.45;
+       padding: 7px 10px; border-radius: 3px; opacity: 0; transition: opacity .08s; max-width: 280px; z-index: 9; }
+@media (max-width: 860px) {
+  .cuerpo { grid-template-columns: minmax(0, 1fr); }
+  .cuerpo > aside { grid-column: 1; border-left: 2px solid var(--linea); padding: 0 0 0 12px; }
   .fila { grid-template-columns: 30px minmax(0, 1fr); }
   .fila .barra { grid-column: 2; }
-  .par { grid-template-columns: 1fr; gap: 14px; }
+  .par { grid-template-columns: minmax(0, 1fr); gap: 14px; }
 }
 </style>
 </head>
 <body>
+<div class="barra-sup"><div><span><b>QualyData</b> · narrativas y coordinación</span><span>Hackathon Argentina Space 2026 · set final</span></div></div>
 <main>
   <header class="cuerpo">
-    <div class="antetitulo">Hackathon Argentina Space 2026 · Desafío QualyData · Set final</div>
     <h1>Qué circula, desde cuándo y quién lo empuja</h1>
     <p class="bajada" id="bajada"></p>
     <div class="firma" id="firma"></div>
@@ -99,9 +120,10 @@ code { font: 14px var(--mono); background: #f0efec; padding: 1px 5px; border-rad
 
   <section class="cuerpo">
     <h2><span class="num">1</span>Qué circula</h2>
+    <aside><b>Narrativa:</b> una afirmación que circula, con quienes la sostienen y quienes la discuten. No es un tema: «el dique» es un tema; «se endeudan en dólares para una obra con sobreprecio» es una narrativa.</aside>
     <p id="txt-que"></p>
   </section>
-  <section class="ancho">
+  <section class="banda"><div class="ancho">
     <figure>
       <div class="leyenda"><span><i style="background:var(--apoya)"></i>apoya la afirmación</span>
         <span><i style="background:var(--rechaza)"></i>la rechaza o la refuta</span>
@@ -111,33 +133,36 @@ code { font: 14px var(--mono); background: #f0efec; padding: 1px 5px; border-rad
         publicaciones que comparten. Cada fila es una afirmación que circula, con sus términos más propios. Las respuestas
         cortas ("tal cual") heredan la postura del comentario al que responden.</figcaption>
     </figure>
-  </section>
+  </div></section>
 
   <section class="cuerpo">
     <h2><span class="num">2</span>Desde cuándo</h2>
+    <aside><b>Origen:</b> el primer comentario seguido de una racha sostenida de la narrativa en las 6 horas siguientes. Un comentario aislado, días antes, no la inicia.</aside>
     <p id="txt-cuando"></p>
   </section>
-  <section class="ancho">
+  <section class="banda"><div class="ancho">
     <figure>
       <div id="fig-cuando"></div>
       <figcaption id="cap-cuando"></figcaption>
     </figure>
-  </section>
+  </div></section>
 
   <section class="cuerpo">
     <h2><span class="num">3</span>Quién lo empuja</h2>
+    <aside><b>Coordinación:</b> dos cuentas coinciden cuando comentan la misma publicación con menos de 30 minutos de diferencia. Se marca el par si coincide tantas veces que el azar no lo explica (Poisson), y la operación es un grupo denso de esos pares.</aside>
     <p id="txt-quien"></p>
   </section>
-  <section class="ancho" id="fig-quien"></section>
-  <section class="cuerpo">
+  <section class="banda"><div class="ancho"><figure>
+    <div id="fig-quien"></div>
     <figcaption><span class="etiqueta-fig">Figura 3.</span> Cada fila es una cuenta y cada punto, un comentario suyo.
       A la izquierda, las cuentas de la operación; a la derecha, la misma cantidad de cuentas genuinas con una actividad
       parecida, elegidas al azar con semilla fija. En una operación los puntos se alinean en columnas: las cuentas
       comentan juntas. La línea vertical marca el origen de la narrativa que empujan.</figcaption>
-  </section>
+  </figure></div></section>
 
   <section class="cuerpo">
     <h2><span class="num">4</span>Cómo se obtuvo</h2>
+    <aside>Código, validación y bitácora de decisiones en el repositorio: <code>docs/</code>.</aside>
     <p>Nadie leyó ni etiquetó comentarios. El mismo comando procesa cualquier set:</p>
     <ol class="metodo">
       <li><b>Limpieza.</b> Capas bronze, silver y gold en DuckDB sobre Parquet. Ninguna fila se pierde: los problemas se
@@ -179,7 +204,14 @@ const emergentes = D.narrativas.filter(n => n.emergente).sort((a, b) => a.origen
 const marcadas = D.grupos.reduce((s, g) => s + g.cuentas, 0);
 set("bajada", `Lectura automática de ${fmt(D.comentarios)} comentarios publicados entre el ${diaFmt.format(new Date(D.inicio * 1000))}
   y el ${diaFmt.format(new Date(D.fin * 1000))} de 2026, de ${fmt(D.cuentas)} cuentas. Ningún comentario fue leído ni etiquetado a mano.`);
-set("firma", `<span><b>Christian Rojas</b> · UNSAM</span><span>13 de noviembre de 2026</span><span>commit <b>${D.costo.codigo || "—"}</b></span>`);
+set("firma", [["Autor", "Christian Rojas"], ["Afiliación", "UNSAM · Ciencia de Datos"], ["Publicado", "13 de noviembre de 2026"],
+  ["Código", `commit ${D.costo.codigo || "—"}`]].map(([h, v]) => `<div><h3>${h}</h3><p>${v}</p></div>`).join(""));
+const ref = n => `<span class="ref" data-ref="${n.id}">«${n.titulo}»</span>`;
+document.addEventListener("mouseover", e => { const r = e.target.closest(".ref"); if (!r) return;
+  document.body.classList.add("enfocando");
+  document.querySelectorAll(`[data-n="${r.dataset.ref}"]`).forEach(x => x.classList.add("foco")); });
+document.addEventListener("mouseout", e => { if (!e.target.closest(".ref")) return;
+  document.body.classList.remove("enfocando"); document.querySelectorAll(".foco").forEach(x => x.classList.remove("foco")); });
 set("cifras", [
   [D.narrativas.length, `narrativas en ${D.temas.length} temas`],
   [emergentes.length, `nacen días después de empezada la conversación`],
@@ -191,7 +223,7 @@ set("pie-cifras", `${fmt(D.comentarios)} comentarios · ${fmt(D.costo.segundos)}
 const mayor = D.narrativas.reduce((a, b) => a.n > b.n ? a : b);
 set("txt-que", `La conversación se ordena en <b>${D.temas.length} temas</b> y <b>${D.narrativas.length} afirmaciones</b> que
   se discuten. Ninguna es unánime: en todas hay un lado que la sostiene y otro que la discute. La más extendida,
-  «${mayor.titulo}», suma ${fmt(mayor.n)} comentarios.`);
+  ${ref(mayor)}, suma ${fmt(mayor.n)} comentarios.`);
 const figQue = document.getElementById("fig-que");
 const maxN = Math.max(...D.narrativas.map(n => n.n));
 const METODO = {"campaña": "la campaña que la empuja", "llm": "un LLM local", "marcadores": "marcadores de refutación"};
@@ -201,7 +233,7 @@ D.temas.forEach((t, i) => {
   caja.innerHTML = `<div class="tema-titulo"><span>Tema ${i + 1} · ${t.palabras.slice(0, 2).join(" · ")}</span><span>${fmt(total)} comentarios</span></div>`;
   t.narrativas.forEach(id => {
     const n = N[id];
-    const fila = document.createElement("div"); fila.className = "fila";
+    const fila = document.createElement("div"); fila.className = "fila"; fila.dataset.n = n.id;
     fila.innerHTML = `<div class="id">${n.id}</div><div><div class="tit">${n.titulo}${n.emergente ? '<span class="marca">emergente</span>' : ""}</div>
       <div class="frases">${n.frases.slice(0, 5).join(" · ")}</div></div><div class="barra"></div>`;
     const W = 300, w = Math.max(40, 230 * n.n / maxN), a = w * n.apoya / n.n;
@@ -223,11 +255,11 @@ D.temas.forEach((t, i) => {
 const orden = [...D.narrativas].sort((a, b) => a.origen - b.origen);
 const pasoS = D.bin_h * 3600, nb = orden[0].serie.apoya.length;
 set("txt-cuando", `Casi todo empieza el primer día. Dos afirmaciones aparecen después:
-  ${emergentes.map(n => `«${n.titulo}» (${n.id}), desde el ${fecha(n.origen)}`).join(", y ")}.
+  ${emergentes.map(n => `${ref(n)} (${n.id}), desde el ${fecha(n.origen)}`).join(", y ")}.
   Para cada narrativa se marca el comentario que inicia una racha sostenida, no el primero suelto.`);
 set("cap-cuando", `<span class="etiqueta-fig">Figura 2.</span> Comentarios por narrativa cada ${D.bin_h} horas,
   ordenadas por fecha de origen. Cada fila tiene su propia escala vertical, para comparar formas y no tamaños; el número
-  de la derecha es el pico. La línea vertical marca el origen; en <b>negro</b>, las narrativas que nacen después del primer día.`);
+  de la derecha es el pico. La línea vertical marca el origen; en <b>azul oscuro</b>, las narrativas que nacen después del primer día.`);
 (function () {
   const caja = document.getElementById("fig-cuando");
   const W = 1000, izq = 300, der = 54, alto = 34, sup = 22;
@@ -242,21 +274,22 @@ set("cap-cuando", `<span class="etiqueta-fig">Figura 2.</span> Comentarios por n
   orden.forEach((n, i) => {
     const base = sup + (i + 1) * alto - 6, total = n.serie.apoya.map((v, k) => v + n.serie.rechaza[k]);
     const pico = Math.max(...total), y = v => base - (alto - 10) * v / pico;
-    const color = n.emergente ? "var(--tinta)" : "var(--tenue)";
+    const color = n.emergente ? "var(--pizarra)" : "rgba(0,0,0,0.38)";
+    const capa = svg, gr = el("g", {class: "serie", "data-n": n.id}, capa);
     let d = `M${x(D.inicio)},${base}`;
     total.forEach((v, k) => { d += `L${x(D.inicio + (k + .5) * pasoS)},${y(v)}`; });
     d += `L${x(D.inicio + nb * pasoS)},${base}Z`;
-    el("path", {d, fill: color, "fill-opacity": n.emergente ? .16 : .1, stroke: color, "stroke-width": 1.5, "stroke-linejoin": "round"}, svg);
-    el("line", {x1: izq, x2: W - der, y1: base, y2: base, stroke: "var(--eje)", "stroke-width": 1}, svg);
+    el("path", {d, fill: color, "fill-opacity": n.emergente ? .16 : .1, stroke: color, "stroke-width": 1.5, "stroke-linejoin": "round"}, gr);
+    el("line", {x1: izq, x2: W - der, y1: base, y2: base, stroke: "var(--eje)", "stroke-width": 1}, gr);
     const xo = x(n.origen);
-    el("line", {x1: xo, x2: xo, y1: base - alto + 8, y2: base, stroke: "var(--tinta)", "stroke-width": 1.5}, svg);
-    el("circle", {cx: xo, cy: base, r: 3, fill: "var(--tinta)"}, svg);
-    const t = el("text", {x: 0, y: base - 4, fill: n.emergente ? "var(--tinta)" : "var(--tinta-2)"}, svg);
+    el("line", {x1: xo, x2: xo, y1: base - alto + 8, y2: base, stroke: "var(--tinta)", "stroke-width": 1.5}, gr);
+    el("circle", {cx: xo, cy: base, r: 3, fill: "var(--tinta)"}, gr);
+    const t = el("text", {x: 0, y: base - 4, fill: n.emergente ? "var(--tinta)" : "var(--tinta-2)"}, gr);
     const corto = n.titulo.length > 38 ? n.titulo.slice(0, 37).trim() + "…" : n.titulo;
     t.textContent = `${n.id}  ${corto}`;
     if (n.emergente) t.setAttribute("font-weight", "500");
-    el("text", {x: W - der + 8, y: base - 4}, svg).textContent = fmt(pico);
-    const hit = el("rect", {x: izq, y: base - alto + 6, width: W - izq - der, height: alto - 6, fill: "transparent"}, svg);
+    el("text", {x: W - der + 8, y: base - 4}, gr).textContent = fmt(pico);
+    const hit = el("rect", {x: izq, y: base - alto + 6, width: W - izq - der, height: alto - 6, fill: "transparent"}, gr);
     hit.addEventListener("mousemove", e => {
       const r = svg.getBoundingClientRect(), sx = (e.clientX - r.left) * W / r.width;
       const k = Math.max(0, Math.min(nb - 1, Math.floor((sx - izq) / (W - izq - der) * nb)));
@@ -276,7 +309,7 @@ const figQuien = document.getElementById("fig-quien");
 D.grupos.forEach(g => {
   const n = N[g.narrativa];
   const bloque = document.createElement("div"); bloque.className = "operacion";
-  bloque.innerHTML = `<h3><span class="id">${g.id}</span>Empuja «${n.titulo}»</h3>
+  bloque.innerHTML = `<h3><span class="id">${g.id}</span>Empuja ${ref(n)}</h3>
     <div class="datos-op"><span><b>${g.cuentas}</b> cuentas · <b>${fmt(g.comentarios)}</b> comentarios</span>
     <span><b>${pct(g.apoya)}</b> de los suyos en ${n.id} la apoyan</span>
     <span>antigüedad mediana <b>${anios(g.edad_mediana)}</b></span>
